@@ -1,20 +1,17 @@
 import axios from 'axios';
 
-// Get API URL from environment variables for direct AWS connection
-const API_URL = import.meta.env.VITE_API_URL || 'http://35.173.110.195:5000';
+// Use local server which proxies to AWS backend
+const API_URL = '';
 
 // Create an axios instance with base configuration
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    // Add CORS headers
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+    'Accept': 'application/json'
   },
-  // Important for CORS preflight requests
-  withCredentials: false
+  // Important for CORS when server has Access-Control-Allow-Credentials: true
+  withCredentials: true
 });
 
 // Request interceptor to add auth token when available

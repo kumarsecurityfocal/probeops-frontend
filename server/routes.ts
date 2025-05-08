@@ -1,9 +1,10 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { randomBytes } from "crypto";
 import { probeTypes, probeStatus } from "@shared/schema";
+import axios from "axios";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -246,6 +247,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
       activeApiKeys
     });
   });
+  
+  // PROXY ROUTES TO EXTERNAL API
+  // These routes will proxy requests to the AWS backend to avoid CORS issues
+  const AWS_API_URL = process.env.AWS_API_URL || 'http://35.173.110.195:5000';
+  console.log(`Proxying requests to AWS backend at: ${AWS_API_URL}`);
+  
+  // Helper function to forward requests to AWS backend
+  const proxyRequest = async (req: Request, res: Response, endpoint: string, method: string) => {
+    try {
+      console.log(`Proxying ${method} request to ${AWS_API_URL}${endpoint}`);
+      
+      const headers: any = {
+        'Content-Type': 'application/json',
+        'Origin': 'https://replit.com'
+      };
+      
+      // Forward authorization if present
+      if (req.headers.authorization) {
+        headers['Authorization'] = req.headers.authorization;
+      }
+      
+      // Create request configuration
+      const requestConfig: any = {
+        method,
+        url: `${AWS_API_URL}${endpoint}`,
+        headers,
+      };
+      
+      // Add body for non-GET requests
+      if (method !== 'GET' && req.body) {
+        requestConfig.data = req.body;
+      }
+      
+      // Add query parameters for GET requests
+      if (method === 'GET' && Object.keys(req.query).length > 0) {
+        requestConfig.params = req.query;
+      }
+      
+      // Execute the request
+      const response = await axios(requestConfig);
+      console.log(`Proxy response status: ${response.status}`);
+      
+      // Forward the response
+      return res.status(response.status).json(response.data);
+    } catch (error: any) {
+      console.error('Proxy request error:', error.message);
+      
+      // Forward the error response if available
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      }
+      
+      return res.status(500).json({ 
+        error: 'Failed to proxy request to AWS backend',
+        message: error.message
+      });
+    }
+  };
+  
+  // Proxy authentication routes
+  app.post('/proxy/users/register', (req, res) => proxyRequest(req, res, '/users/register', 'POST'));
+  app.post('/proxy/users/login', (req, res) => proxyRequest(req, res, '/users/login', 'POST'));
+  app.get('/proxy/users/me', (req, res) => proxyRequest(req, res, '/users/me', 'GET'));
+  app.post('/proxy/users/logout', (req, res) => proxyRequest(req, res, '/users/logout', 'POST'));
+  
+  // Proxy API key routes
+  app.get('/proxy/apikeys', (req, res) => proxyRequest(req, res, '/apikeys', 'GET'));
+  app.post('/proxy/apikeys', (req, res) => proxyRequest(req, res, '/apikeys', 'POST'));
+  app.delete('/proxy/apikeys/:id', (req, res) => proxyRequest(req, res, `/apikeys/${req.params.id}`, 'DELETE'));
+  
+  // Proxy probe routes
+  app.post('/proxy/probes/ping', (req, res) => proxyRequest(req, res, '/probes/ping', 'POST'));
+  app.post('/proxy/probes/traceroute', (req, res) => proxyRequest(req, res, '/probes/traceroute', 'POST'));
+  app.post('/proxy/probes/dns', (req, res) => proxyRequest(req, res, '/probes/dns', 'POST'));
+  app.post('/proxy/probes/whois', (req, res) => proxyRequest(req, res, '/probes/whois', 'POST'));
+  app.get('/proxy/probes/history', (req, res) => proxyRequest(req, res, '/probes/history', 'GET'));
 
   // Create and return the HTTP server
   const httpServer = createServer(app);
