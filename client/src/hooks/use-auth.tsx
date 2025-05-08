@@ -8,13 +8,16 @@ import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-// Interface for the user data returned from the backend
-interface JwtUser {
+// Interface for the user data returned from the backend 
+// Based on the actual response format from the API
+interface BackendUser {
   id: number;
   username: string;
-  firstName?: string | null;
-  lastName?: string | null;
-  token?: string;  // JWT token from the backend
+  email: string;
+  created_at: string;
+  is_active: boolean;
+  is_admin: boolean;
+  api_key_count: number;
 }
 
 // Interface for login request data
@@ -23,20 +26,22 @@ interface LoginRequest {
   password: string;
 }
 
-// Interface for login response data
+// Interface for login response data - updated to match backend
 interface LoginResponse {
-  user: JwtUser;
+  message: string;
   token: string;
+  user: BackendUser;
 }
 
-// Interface for registration response data
+// Interface for registration response data - updated to match backend
 interface RegisterResponse {
-  user: JwtUser;
-  token: string;
+  message: string;
+  user: BackendUser;
+  api_key: string;
 }
 
 type AuthContextType = {
-  user: JwtUser | null;
+  user: BackendUser | null;
   isLoading: boolean;
   error: Error | null;
   loginMutation: UseMutationResult<LoginResponse, Error, LoginRequest>;
@@ -48,7 +53,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const [user, setUser] = useState<JwtUser | null>(null);
+  const [user, setUser] = useState<BackendUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -72,13 +77,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
-  // Login mutation - adjusted for JWT
+  // Login mutation - adjusted for JWT and backend format
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginRequest) => {
+      console.log("Logging in with credentials:", credentials);
       const res = await apiRequest("POST", "users/login", credentials);
-      return await res.json();
+      const data = await res.json();
+      console.log("Login response:", data);
+      return data;
     },
     onSuccess: (data: LoginResponse) => {
+      console.log("Login success:", data);
       // Save token and user info to localStorage
       localStorage.setItem('jwt_token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
@@ -92,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      console.error("Login error:", error);
       toast({
         title: "Login failed",
         description: error.message || "Invalid username or password",
@@ -100,26 +110,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  // Register mutation - adjusted for JWT
+  // Register mutation - adjusted for JWT and backend format
   const registerMutation = useMutation({
     mutationFn: async (userData: InsertUser) => {
+      console.log("Registering with data:", userData);
       const res = await apiRequest("POST", "users/register", userData);
       return await res.json();
     },
     onSuccess: (data: RegisterResponse) => {
-      // Save token and user info to localStorage
-      localStorage.setItem('jwt_token', data.token);
+      console.log("Registration success:", data);
+      // Store user data
       localStorage.setItem('user', JSON.stringify(data.user));
       
       // Update state
       setUser(data.user);
       
+      // Save API key for later use
+      localStorage.setItem('first_api_key', data.api_key);
+      
       toast({
         title: "Registration successful",
-        description: `Welcome, ${data.user.username}!`,
+        description: `Welcome, ${data.user.username}! Your first API key has been created.`,
       });
+      
+      // Auto-login after registration
+      if (userData.username && userData.password) {
+        loginMutation.mutate({
+          username: userData.username,
+          password: userData.password
+        });
+      }
     },
     onError: (error: Error) => {
+      console.error("Registration error:", error);
       toast({
         title: "Registration failed",
         description: error.message || "Could not create account",
