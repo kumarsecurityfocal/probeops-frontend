@@ -133,13 +133,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: `Welcome, ${data.user.username}! Your first API key has been created.`,
       });
       
-      // Auto-login after registration
-      if (userData.username && userData.password) {
+      // Note: We can't auto-login after registration because password is now hashed
+      // The user will need to manually login after registration
+      /*
+      if (userData && userData.username && userData.password) {
         loginMutation.mutate({
           username: userData.username,
           password: userData.password
         });
       }
+      */
     },
     onError: (error: Error) => {
       console.error("Registration error:", error);

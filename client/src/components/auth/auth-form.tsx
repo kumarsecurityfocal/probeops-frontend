@@ -58,6 +58,7 @@ export function AuthForm() {
   
   // Handle login form submission
   const onLoginSubmit = (data: LoginFormValues) => {
+    console.log("Login submit:", data);
     loginMutation.mutate({
       username: data.username,
       password: data.password,
@@ -66,6 +67,7 @@ export function AuthForm() {
   
   // Handle register form submission
   const onRegisterSubmit = (data: RegisterFormValues) => {
+    console.log("Register submit:", data);
     const { confirmPassword, ...userData } = data;
     registerMutation.mutate(userData);
   };
