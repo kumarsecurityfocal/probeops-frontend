@@ -1,15 +1,20 @@
 import axios from 'axios';
 
-// Get API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || 'http://35.173.110.195:5000';
+// Use our local server as the API endpoint, which will proxy to the AWS server
+const API_URL = '';
 
 // Create an axios instance with base configuration
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  }
+    'Accept': 'application/json',
+    // Add CORS headers
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+  },
+  // Important for CORS preflight requests
+  withCredentials: false
 });
 
 // Request interceptor to add auth token when available
@@ -32,6 +37,8 @@ api.interceptors.response.use(
   error => {
     let errorMessage = 'An unexpected error occurred';
     
+    console.error('Full API Error:', error);
+    
     if (error.response) {
       // The request was made and the server responded with a status code outside of 2xx
       console.error('API Error Response:', error.response);
@@ -44,8 +51,8 @@ api.interceptors.response.use(
       }
     } else if (error.request) {
       // The request was made but no response was received
-      console.error('API No Response:', error.request);
-      errorMessage = 'No response from server. Please check your connection.';
+      console.error('API No Response (CORS issue or network error):', error.request);
+      errorMessage = 'No response from server. This may be due to CORS restrictions, network issues, or the server is down.';
     } else {
       // Something happened in setting up the request
       console.error('API Request Error:', error.message);
@@ -58,47 +65,47 @@ api.interceptors.response.use(
 
 export default api;
 
-// Authentication API endpoints
+// Authentication API endpoints - using local proxy
 export const authAPI = {
   login: (credentials: { username: string; password: string }) => 
-    api.post('/users/login', credentials),
+    api.post('/proxy/users/login', credentials),
     
   register: (userData: { username: string; email: string; password: string }) => 
-    api.post('/users/register', userData),
+    api.post('/proxy/users/register', userData),
     
   getUser: () => 
-    api.get('/users/me'),
+    api.get('/proxy/users/me'),
     
   logout: () => 
-    api.post('/users/logout')
+    api.post('/proxy/users/logout')
 };
 
-// API Keys endpoints
+// API Keys endpoints - using local proxy
 export const apiKeysAPI = {
   getAll: () => 
-    api.get('/apikeys'),
+    api.get('/proxy/apikeys'),
     
   create: (data: { name: string; description?: string }) => 
-    api.post('/apikeys', data),
+    api.post('/proxy/apikeys', data),
     
   delete: (id: number) => 
-    api.delete(`/apikeys/${id}`)
+    api.delete(`/proxy/apikeys/${id}`)
 };
 
-// Probe endpoints
+// Probe endpoints - using local proxy
 export const probesAPI = {
   ping: (data: { host: string }) => 
-    api.post('/probes/ping', data),
+    api.post('/proxy/probes/ping', data),
     
   traceroute: (data: { host: string }) => 
-    api.post('/probes/traceroute', data),
+    api.post('/proxy/probes/traceroute', data),
     
   dns: (data: { domain: string; recordType: string }) => 
-    api.post('/probes/dns', data),
+    api.post('/proxy/probes/dns', data),
     
   whois: (data: { domain: string }) => 
-    api.post('/probes/whois', data),
+    api.post('/proxy/probes/whois', data),
     
   getHistory: (limit?: number) => 
-    api.get('/probes/history', { params: limit ? { limit } : {} })
+    api.get('/proxy/probes/history', { params: limit ? { limit } : {} })
 };
