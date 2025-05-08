@@ -23,12 +23,24 @@ export default function ApiKeysPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   // Fetch API keys from AWS backend via proxy
-  const { data: backendApiKeys, isLoading } = useQuery<BackendApiKey[]>({
-    queryKey: ["/proxy/apikeys"],
+  const { data: backendResponse, isLoading } = useQuery<any, Error>({
+    queryKey: ["/proxy/apikeys"]
   });
   
+  // Log the response for debugging
+  if (backendResponse) {
+    console.log("API keys response:", backendResponse);
+  }
+
+  // Extract the API keys array from the response
+  // AWS backend might return {data: [...]} or another structure
+  const backendApiKeys = backendResponse && 
+    (Array.isArray(backendResponse) ? backendResponse : 
+    (backendResponse.data ? backendResponse.data : 
+    (backendResponse.apikeys ? backendResponse.apikeys : [])));
+  
   // Transform backend API keys to frontend format
-  const apiKeys: ApiKey[] = (backendApiKeys || []).map(key => ({
+  const apiKeys: ApiKey[] = (Array.isArray(backendApiKeys) ? backendApiKeys : []).map(key => ({
     id: key.id,
     userId: key.user_id,
     name: key.name,

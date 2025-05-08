@@ -30,12 +30,21 @@ export default function HistoryPage() {
   const [selectedProbe, setSelectedProbe] = useState<ProbeResult | null>(null);
   
   // Fetch all probe results from AWS backend via proxy
-  const { data: backendProbeResults, isLoading } = useQuery<BackendProbeResult[]>({
-    queryKey: ["/proxy/probes/history"],
+  const { data: backendResponse, isLoading } = useQuery<any, Error>({
+    queryKey: ["/proxy/probes/history"]
   });
   
+  // Log the response for debugging
+  if (backendResponse) {
+    console.log("Probe history response:", backendResponse);
+  }
+  
+  // Extract the probe results array from the response
+  // AWS backend returns: { jobs: [] } in the response
+  const backendProbeResults = backendResponse && backendResponse.jobs ? backendResponse.jobs : [];
+  
   // Transform backend results to frontend format
-  const probeResults: ProbeResult[] = (backendProbeResults || []).map(probe => ({
+  const probeResults: ProbeResult[] = (Array.isArray(backendProbeResults) ? backendProbeResults : []).map(probe => ({
     id: probe.id,
     userId: probe.user_id,
     probeType: probe.probe_type,
