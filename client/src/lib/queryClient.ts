@@ -11,8 +11,16 @@ const getAuthToken = (): string | null => {
 // Function to check if response is OK and handle errors
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    // Try to parse error as JSON first
+    let errorMessage;
+    try {
+      const errorData = await res.json();
+      errorMessage = errorData.error || errorData.message || res.statusText;
+    } catch (e) {
+      // If not JSON, get as text
+      errorMessage = await res.text() || res.statusText;
+    }
+    throw new Error(`${res.status}: ${errorMessage}`);
   }
 }
 
@@ -43,20 +51,27 @@ export async function apiRequest(
   // Prepare headers with Content-Type and Authorization if token exists
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   };
   
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
   
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: data ? JSON.stringify(data) : undefined,
-  });
+  try {
+    const res = await fetch(url, {
+      method,
+      headers,
+      mode: 'cors',
+      body: data ? JSON.stringify(data) : undefined,
+    });
 
-  await throwIfResNotOk(res);
-  return res;
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    console.error("API Request error:", error);
+    throw error;
+  }
 }
 
 // Query function type for React Query
@@ -72,19 +87,30 @@ export const getQueryFn: <T>(options: {
     const token = getAuthToken();
     
     // Prepare headers with Authorization if token exists
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      'Accept': 'application/json'
+    };
+    
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const res = await fetch(url, { headers });
+    try {
+      const res = await fetch(url, { 
+        headers,
+        mode: 'cors'
+      });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
+
+      await throwIfResNotOk(res);
+      return await res.json();
+    } catch (error) {
+      console.error("Query fetch error:", error);
+      throw error;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
 
 // Configure React Query client
