@@ -12,9 +12,8 @@ import { Loader2 } from "lucide-react";
 
 // Register schema with password confirmation
 const registerSchema = z.object({
-  username: z.string().min(1, "Username/Email is required").email("Must be a valid email"),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  email: z.string().min(1, "Email is required").email("Must be a valid email"),
   password: z.string().min(8, "Password must be at least 8 characters long"),
   confirmPassword: z.string().min(1, "Please confirm your password"),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -24,7 +23,7 @@ const registerSchema = z.object({
 
 // Login schema
 const loginSchema = z.object({
-  username: z.string().min(1, "Username/Email is required").email("Must be a valid email"),
+  username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
   rememberMe: z.boolean().optional(),
 });
@@ -51,8 +50,7 @@ export function AuthForm() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       username: "",
-      firstName: "",
-      lastName: "",
+      email: "",
       password: "",
       confirmPassword: "",
     },
@@ -86,11 +84,11 @@ export function AuthForm() {
           {isLogin ? (
             <form onSubmit={loginForm.handleSubmit(onLoginSubmit)}>
               <div className="mb-4">
-                <Label htmlFor="username">Email Address</Label>
+                <Label htmlFor="username">Username</Label>
                 <Input
                   id="username"
-                  type="email"
-                  placeholder="you@example.com"
+                  type="text"
+                  placeholder="username"
                   {...loginForm.register("username")}
                 />
                 {loginForm.formState.errors.username && (
@@ -150,49 +148,32 @@ export function AuthForm() {
             </form>
           ) : (
             <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)}>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <Label htmlFor="first-name">First Name</Label>
-                  <Input
-                    id="first-name"
-                    type="text"
-                    placeholder="John"
-                    {...registerForm.register("firstName")}
-                  />
-                  {registerForm.formState.errors.firstName && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {registerForm.formState.errors.firstName.message}
-                    </p>
-                  )}
-                </div>
-                
-                <div>
-                  <Label htmlFor="last-name">Last Name</Label>
-                  <Input
-                    id="last-name"
-                    type="text"
-                    placeholder="Doe"
-                    {...registerForm.register("lastName")}
-                  />
-                  {registerForm.formState.errors.lastName && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {registerForm.formState.errors.lastName.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-              
               <div className="mb-4">
-                <Label htmlFor="register-username">Email Address</Label>
+                <Label htmlFor="register-username">Username</Label>
                 <Input
                   id="register-username"
-                  type="email"
-                  placeholder="you@example.com"
+                  type="text"
+                  placeholder="johndoe"
                   {...registerForm.register("username")}
                 />
                 {registerForm.formState.errors.username && (
                   <p className="mt-1 text-sm text-red-600">
                     {registerForm.formState.errors.username.message}
+                  </p>
+                )}
+              </div>
+              
+              <div className="mb-4">
+                <Label htmlFor="register-email">Email Address</Label>
+                <Input
+                  id="register-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  {...registerForm.register("email")}
+                />
+                {registerForm.formState.errors.email && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {registerForm.formState.errors.email.message}
                   </p>
                 )}
               </div>
