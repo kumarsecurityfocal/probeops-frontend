@@ -62,47 +62,47 @@ api.interceptors.response.use(
 
 export default api;
 
-// Authentication API endpoints - direct connection to AWS backend
+// Authentication API endpoints - via proxy to AWS backend
 export const authAPI = {
   login: (credentials: { username: string; password: string }) => 
-    api.post('/users/login', credentials),
+    api.post('/proxy/users/login', credentials),
     
   register: (userData: { username: string; email: string; password: string }) => 
-    api.post('/users/register', userData),
+    api.post('/proxy/users/register', userData),
     
   getUser: () => 
-    api.get('/users/me'),
+    api.get('/proxy/users/me'),
     
   logout: () => 
-    api.post('/users/logout')
+    api.post('/proxy/users/logout')
 };
 
-// API Keys endpoints - direct connection to AWS backend
+// API Keys endpoints - via proxy to AWS backend
 export const apiKeysAPI = {
   getAll: () => 
-    api.get('/apikeys'),
+    api.get('/proxy/apikeys'),
     
   create: (data: { name: string; description?: string }) => 
-    api.post('/apikeys', data),
+    api.post('/proxy/apikeys', data),
     
   delete: (id: number) => 
-    api.delete(`/apikeys/${id}`)
+    api.delete(`/proxy/apikeys/${id}`)
 };
 
-// Probe endpoints - direct connection to AWS backend
+// Probe endpoints - via proxy to AWS backend
 export const probesAPI = {
   ping: (data: { host: string }) => 
-    api.post('/probes/ping', data),
+    api.post('/proxy/probes/ping', data),
     
   traceroute: (data: { host: string }) => 
-    api.post('/probes/traceroute', data),
+    api.post('/proxy/probes/traceroute', data),
     
   dns: (data: { domain: string; recordType: string }) => 
-    api.post('/probes/dns', data),
+    api.post('/proxy/probes/dns', data),
     
   whois: (data: { domain: string }) => 
-    api.post('/probes/whois', data),
+    api.post('/proxy/probes/whois', data),
     
   getHistory: (limit?: number) => 
-    api.get('/probes/history', { params: limit ? { limit } : {} })
+    api.get('/proxy/probes/history', { params: limit ? { limit } : {} })
 };
