@@ -5,7 +5,8 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { authAPI } from "../lib/api";
+import { queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 // Interface for the user data returned from the backend 
@@ -58,17 +59,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
 
   // Effect to load user from localStorage on initial load
+  // Then verify with /users/me endpoint if token exists
   useEffect(() => {
-    const loadUser = () => {
+    const loadUser = async () => {
       try {
         const storedUser = localStorage.getItem('user');
         const token = localStorage.getItem('jwt_token');
         
         if (storedUser && token) {
           setUser(JSON.parse(storedUser));
+          
+          // Verify token validity with backend
+          try {
+            const response = await authAPI.getUser();
+            console.log("User verification response:", response.data);
+            
+            // Update user data with fresh data from server
+            setUser(response.data);
+            localStorage.setItem('user', JSON.stringify(response.data));
+          } catch (apiError) {
+            console.error("Token validation failed:", apiError);
+            // Clear invalid token data
+            localStorage.removeItem('jwt_token');
+            localStorage.removeItem('user');
+            setUser(null);
+          }
         }
       } catch (err) {
         console.error('Error loading user from storage:', err);
+        localStorage.removeItem('user');
+        localStorage.removeItem('jwt_token');
       } finally {
         setIsLoading(false);
       }
@@ -77,14 +97,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
-  // Login mutation - adjusted for JWT and backend format
+  // Login mutation - using axios API client
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginRequest) => {
       console.log("Logging in with credentials:", credentials);
-      const res = await apiRequest("POST", "users/login", credentials);
-      const data = await res.json();
-      console.log("Login response:", data);
-      return data;
+      const response = await authAPI.login(credentials);
+      console.log("Login response:", response.data);
+      return response.data;
     },
     onSuccess: (data: LoginResponse) => {
       console.log("Login success:", data);
@@ -110,12 +129,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  // Register mutation - adjusted for JWT and backend format
+  // Register mutation - using axios API client
   const registerMutation = useMutation({
     mutationFn: async (userData: InsertUser) => {
       console.log("Registering with data:", userData);
-      const res = await apiRequest("POST", "users/register", userData);
-      return await res.json();
+      const response = await authAPI.register(userData);
+      console.log("Registration response:", response.data);
+      return response.data;
     },
     onSuccess: (data: RegisterResponse) => {
       console.log("Registration success:", data);
@@ -135,14 +155,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Note: We can't auto-login after registration because password is now hashed
       // The user will need to manually login after registration
-      /*
-      if (userData && userData.username && userData.password) {
-        loginMutation.mutate({
-          username: userData.username,
-          password: userData.password
-        });
-      }
-      */
     },
     onError: (error: Error) => {
       console.error("Registration error:", error);
@@ -154,13 +166,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  // Logout mutation - adjusted for JWT
+  // Logout mutation - using JWT and optional API call
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      // With JWT, we don't need to hit an endpoint to logout
-      // Just remove the token from localStorage
-      localStorage.removeItem('jwt_token');
-      localStorage.removeItem('user');
+      try {
+        // Try to call the logout endpoint, but continue even if it fails
+        await authAPI.logout().catch(() => console.log("Backend logout call failed, continuing with local logout"));
+      } finally {
+        // Always remove local tokens regardless of API call success/failure
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('user');
+      }
     },
     onSuccess: () => {
       // Update state
@@ -172,10 +188,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      console.error("Logout error:", error);
+      // Even if there's an API error, we'll still log the user out locally
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('user');
+      setUser(null);
+      
       toast({
-        title: "Logout failed",
-        description: error.message,
-        variant: "destructive",
+        title: "Logged out",
+        description: "You've been logged out, but there was an issue with the server",
+        variant: "default",
       });
     },
   });
