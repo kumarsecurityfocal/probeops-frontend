@@ -64,10 +64,9 @@ export function MainLayout({ children }: MainLayoutProps) {
   ];
   
   const getInitials = () => {
-    if (!user) return "U";
-    const firstInitial = user.firstName ? user.firstName[0] : "";
-    const lastInitial = user.lastName ? user.lastName[0] : "";
-    return firstInitial && lastInitial ? `${firstInitial}${lastInitial}` : user.username.substring(0, 2).toUpperCase();
+    if (!user || !user.username) return "U";
+    // Just use the first two characters of the username since we don't have first/last name
+    return user.username.substring(0, 2).toUpperCase();
   };
   
   return (
@@ -113,9 +112,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                   </Avatar>
                   <div className="ml-3">
                     <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
-                      {user?.firstName && user?.lastName
-                        ? `${user.firstName} ${user.lastName}`
-                        : user?.username}
+                      {user?.username}
                     </p>
                     <p className="text-xs font-medium text-gray-500 group-hover:text-gray-700">
                       View profile
@@ -166,21 +163,17 @@ export function MainLayout({ children }: MainLayoutProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings">
-                      <a className="flex items-center">
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Your Profile</span>
-                      </a>
-                    </Link>
+                  <DropdownMenuItem onClick={() => window.location.href = '/settings'}>
+                    <div className="flex items-center">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Your Profile</span>
+                    </div>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings">
-                      <a className="flex items-center">
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                      </a>
-                    </Link>
+                  <DropdownMenuItem onClick={() => window.location.href = '/settings'}>
+                    <div className="flex items-center">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout} className="flex items-center">
                     <LogOut className="mr-2 h-4 w-4" />
@@ -238,9 +231,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                     </Avatar>
                     <div className="ml-3">
                       <p className="text-base font-medium text-gray-700 group-hover:text-gray-900">
-                        {user?.firstName && user?.lastName
-                          ? `${user.firstName} ${user.lastName}`
-                          : user?.username}
+                        {user?.username}
                       </p>
                       <Button variant="link" className="text-sm text-gray-500 p-0" onClick={handleLogout}>
                         Sign out

@@ -72,11 +72,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Verify token validity with backend
           try {
             const response = await authAPI.getUser();
-            console.log("User verification response:", response.data);
+            // Extract user from response structure
+            console.log("User verification raw response:", response.data);
+            
+            // The actual user object might be nested inside a 'user' field
+            const userData = response.data.user || response.data;
+            console.log("Extracted user data:", userData);
             
             // Update user data with fresh data from server
-            setUser(response.data);
-            localStorage.setItem('user', JSON.stringify(response.data));
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
           } catch (apiError) {
             console.error("Token validation failed:", apiError);
             // Clear invalid token data
