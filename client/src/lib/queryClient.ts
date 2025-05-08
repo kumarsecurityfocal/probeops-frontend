@@ -1,5 +1,14 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Get the API URL from environment variables
+const API_URL = import.meta.env.VITE_API_URL || 'http://35.173.110.195:5000';
+
+// Get JWT token from localStorage
+const getAuthToken = (): string | null => {
+  return localStorage.getItem('jwt_token');
+};
+
+// Function to check if response is OK and handle errors
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -7,31 +16,68 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Build full URL with API base
+const getFullUrl = (endpoint: string): string => {
+  // If endpoint already starts with http, assume it's a full URL
+  if (endpoint.startsWith('http')) {
+    return endpoint;
+  }
+  
+  // Remove leading slash if present to avoid double slashes
+  const formattedEndpoint = endpoint.startsWith('/') 
+    ? endpoint.substring(1) 
+    : endpoint;
+    
+  return `${API_URL}/${formattedEndpoint}`;
+};
+
+// Main API request function for mutations
 export async function apiRequest(
   method: string,
-  url: string,
+  endpoint: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const url = getFullUrl(endpoint);
+  const token = getAuthToken();
+  
+  // Prepare headers with Content-Type and Authorization if token exists
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
   });
 
   await throwIfResNotOk(res);
   return res;
 }
 
+// Query function type for React Query
 type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
+    // Extract the endpoint from the query key
+    const endpoint = queryKey[0] as string;
+    const url = getFullUrl(endpoint);
+    const token = getAuthToken();
+    
+    // Prepare headers with Authorization if token exists
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const res = await fetch(url, { headers });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
@@ -41,6 +87,7 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+// Configure React Query client
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
