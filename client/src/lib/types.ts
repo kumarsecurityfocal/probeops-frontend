@@ -30,6 +30,7 @@ export interface ApiKey {
   name: string;
   key: string;
   createdAt: Date;
+  description?: string;
 }
 
 export interface ProbeResult {

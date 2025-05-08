@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { insertUserSchema } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,17 +10,21 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
-// Extend the insert schema to add confirmPassword for registration
-const registerSchema = insertUserSchema.extend({
+// Register schema with password confirmation
+const registerSchema = z.object({
+  username: z.string().min(1, "Username/Email is required").email("Must be a valid email"),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  password: z.string().min(8, "Password must be at least 8 characters long"),
   confirmPassword: z.string().min(1, "Please confirm your password"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
 });
 
-// Login schema only needs username and password
+// Login schema
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
+  username: z.string().min(1, "Username/Email is required").email("Must be a valid email"),
   password: z.string().min(1, "Password is required"),
   rememberMe: z.boolean().optional(),
 });
@@ -86,7 +89,7 @@ export function AuthForm() {
                 <Label htmlFor="username">Email Address</Label>
                 <Input
                   id="username"
-                  type="text"
+                  type="email"
                   placeholder="you@example.com"
                   {...loginForm.register("username")}
                 />
@@ -183,7 +186,7 @@ export function AuthForm() {
                 <Label htmlFor="register-username">Email Address</Label>
                 <Input
                   id="register-username"
-                  type="text"
+                  type="email"
                   placeholder="you@example.com"
                   {...registerForm.register("username")}
                 />

@@ -23,10 +23,21 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ApiKeyTableProps {
   apiKeys: ApiKey[];
+}
+
+// Backend API key format
+interface BackendApiKey {
+  id: number;
+  user_id: number;
+  name: string;
+  key: string;
+  created_at: string;
+  description?: string;
 }
 
 export function ApiKeyTable({ apiKeys }: ApiKeyTableProps) {
@@ -35,15 +46,14 @@ export function ApiKeyTable({ apiKeys }: ApiKeyTableProps) {
   
   const deleteApiKeyMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/keys/${id}`);
+      await apiRequest("DELETE", `apikeys/${id}`);
     },
     onSuccess: () => {
       toast({
         title: "API key deleted",
         description: "The API key has been successfully deleted",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/keys"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["apikeys"] });
       setKeyToDelete(null);
     },
     onError: (error: Error) => {
@@ -73,6 +83,19 @@ export function ApiKeyTable({ apiKeys }: ApiKeyTableProps) {
     );
   }
   
+  // Function to format API key for display
+  const formatApiKey = (key: string): string => {
+    if (!key) return "";
+    
+    // If key is less than 10 characters, mask all but the last 4
+    if (key.length <= 10) {
+      return `...${key.substring(key.length - 4)}`;
+    }
+    
+    // For longer keys, show first 4 and last 4
+    return `${key.substring(0, 4)}...${key.substring(key.length - 4)}`;
+  };
+  
   return (
     <>
       <div className="w-full overflow-auto">
@@ -81,16 +104,34 @@ export function ApiKeyTable({ apiKeys }: ApiKeyTableProps) {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Created</TableHead>
-              <TableHead>Last Characters</TableHead>
+              <TableHead>Key Preview</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {apiKeys.map((apiKey) => (
               <TableRow key={apiKey.id}>
-                <TableCell className="font-medium">{apiKey.name}</TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-1">
+                    {apiKey.name}
+                    {apiKey.description && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>
+                              <Info className="h-4 w-4 text-gray-400" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{apiKey.description}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>{format(new Date(apiKey.createdAt), "yyyy-MM-dd")}</TableCell>
-                <TableCell>...{apiKey.key.substring(apiKey.key.length - 6)}</TableCell>
+                <TableCell className="font-mono">{formatApiKey(apiKey.key)}</TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"

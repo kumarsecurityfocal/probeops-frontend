@@ -82,7 +82,7 @@ export function ProbeCard({ title, description, icon, type }: ProbeCardProps) {
   // Ping mutation
   const pingMutation = useMutation({
     mutationFn: async (data: PingFormValues) => {
-      const res = await apiRequest("POST", "/api/probes/ping", data);
+      const res = await apiRequest("POST", "probes/ping", data);
       return await res.json();
     },
     onSuccess: () => {
@@ -90,8 +90,7 @@ export function ProbeCard({ title, description, icon, type }: ProbeCardProps) {
         title: "Ping completed",
         description: "The ping probe was executed successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/probes"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["probes/history"] });
       pingForm.reset();
     },
     onError: (error: Error) => {
@@ -106,7 +105,7 @@ export function ProbeCard({ title, description, icon, type }: ProbeCardProps) {
   // Traceroute mutation
   const tracerouteMutation = useMutation({
     mutationFn: async (data: TracerouteFormValues) => {
-      const res = await apiRequest("POST", "/api/probes/traceroute", data);
+      const res = await apiRequest("POST", "probes/traceroute", data);
       return await res.json();
     },
     onSuccess: () => {
@@ -114,8 +113,7 @@ export function ProbeCard({ title, description, icon, type }: ProbeCardProps) {
         title: "Traceroute completed",
         description: "The traceroute probe was executed successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/probes"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["probes/history"] });
       tracerouteForm.reset();
     },
     onError: (error: Error) => {
@@ -130,7 +128,7 @@ export function ProbeCard({ title, description, icon, type }: ProbeCardProps) {
   // DNS mutation
   const dnsMutation = useMutation({
     mutationFn: async (data: DnsFormValues) => {
-      const res = await apiRequest("POST", "/api/probes/dns", data);
+      const res = await apiRequest("POST", "probes/dns", data);
       return await res.json();
     },
     onSuccess: () => {
@@ -138,8 +136,7 @@ export function ProbeCard({ title, description, icon, type }: ProbeCardProps) {
         title: "DNS lookup completed",
         description: "The DNS lookup probe was executed successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/probes"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["probes/history"] });
       dnsForm.reset();
     },
     onError: (error: Error) => {
@@ -154,7 +151,7 @@ export function ProbeCard({ title, description, icon, type }: ProbeCardProps) {
   // WHOIS mutation
   const whoisMutation = useMutation({
     mutationFn: async (data: WhoisFormValues) => {
-      const res = await apiRequest("POST", "/api/probes/whois", data);
+      const res = await apiRequest("POST", "probes/whois", data);
       return await res.json();
     },
     onSuccess: () => {
@@ -162,8 +159,7 @@ export function ProbeCard({ title, description, icon, type }: ProbeCardProps) {
         title: "WHOIS lookup completed",
         description: "The WHOIS lookup probe was executed successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/probes"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["probes/history"] });
       whoisForm.reset();
     },
     onError: (error: Error) => {

@@ -26,9 +26,19 @@ interface ApiKeyDialogProps {
 
 const apiKeySchema = z.object({
   name: z.string().min(1, "API key name is required"),
+  description: z.string().optional(),
 });
 
 type ApiKeyFormValues = z.infer<typeof apiKeySchema>;
+
+// Response from backend when creating an API key
+interface ApiKeyResponse {
+  id: number;
+  user_id: number;
+  name: string;
+  key: string;
+  created_at: string;
+}
 
 export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
   const { toast } = useToast();
@@ -39,18 +49,27 @@ export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
     resolver: zodResolver(apiKeySchema),
     defaultValues: {
       name: "",
+      description: "",
     },
   });
   
   const createApiKeyMutation = useMutation({
     mutationFn: async (data: ApiKeyFormValues) => {
-      const res = await apiRequest("POST", "/api/keys", data);
+      const res = await apiRequest("POST", "apikeys", data);
       return await res.json();
     },
-    onSuccess: (data: ApiKey) => {
-      setNewApiKey(data);
-      queryClient.invalidateQueries({ queryKey: ["/api/keys"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+    onSuccess: (data: ApiKeyResponse) => {
+      // Transform the backend response to match our frontend ApiKey type
+      const apiKey: ApiKey = {
+        id: data.id,
+        userId: data.user_id,
+        name: data.name,
+        key: data.key,
+        createdAt: new Date(data.created_at)
+      };
+      
+      setNewApiKey(apiKey);
+      queryClient.invalidateQueries({ queryKey: ["apikeys"] });
     },
     onError: (error: Error) => {
       toast({
@@ -116,6 +135,14 @@ export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
                     {form.formState.errors.name.message}
                   </p>
                 )}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="api-key-description">Description (Optional)</Label>
+                <Input
+                  id="api-key-description"
+                  placeholder="e.g. For monitoring production infrastructure"
+                  {...form.register("description")}
+                />
               </div>
             </div>
             <DialogFooter>

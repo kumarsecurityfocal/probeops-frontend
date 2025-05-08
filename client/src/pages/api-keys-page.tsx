@@ -9,13 +9,33 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PlusCircle } from "lucide-react";
 import { ApiKey } from "@/lib/types";
 
+// Interface for backend API key structure
+interface BackendApiKey {
+  id: number;
+  user_id: number;
+  name: string;
+  key: string;
+  created_at: string;
+  description?: string;
+}
+
 export default function ApiKeysPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  // Fetch API keys
-  const { data: apiKeys, isLoading } = useQuery<ApiKey[]>({
-    queryKey: ["/api/keys"],
+  // Fetch API keys from backend
+  const { data: backendApiKeys, isLoading } = useQuery<BackendApiKey[]>({
+    queryKey: ["apikeys"],
   });
+  
+  // Transform backend API keys to frontend format
+  const apiKeys: ApiKey[] = (backendApiKeys || []).map(key => ({
+    id: key.id,
+    userId: key.user_id,
+    name: key.name,
+    key: key.key,
+    createdAt: new Date(key.created_at),
+    description: key.description
+  }));
   
   return (
     <MainLayout>
@@ -49,7 +69,7 @@ export default function ApiKeysPage() {
                   </div>
                 </CardContent>
               ) : (
-                <ApiKeyTable apiKeys={apiKeys || []} />
+                <ApiKeyTable apiKeys={apiKeys} />
               )}
             </Card>
           </div>
