@@ -1,73 +1,37 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import api from "./api";
+import axios, { AxiosResponse } from "axios";
 
-// Get the API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || 'http://35.173.110.195:5000';
-
-// Get JWT token from localStorage
-const getAuthToken = (): string | null => {
-  return localStorage.getItem('jwt_token');
-};
-
-// Function to check if response is OK and handle errors
-async function throwIfResNotOk(res: Response) {
-  if (!res.ok) {
-    // Try to parse error as JSON first
-    let errorMessage;
-    try {
-      const errorData = await res.json();
-      errorMessage = errorData.error || errorData.message || res.statusText;
-    } catch (e) {
-      // If not JSON, get as text
-      errorMessage = await res.text() || res.statusText;
-    }
-    throw new Error(`${res.status}: ${errorMessage}`);
-  }
-}
-
-// Build full URL with API base
-const getFullUrl = (endpoint: string): string => {
-  // If endpoint already starts with http, assume it's a full URL
-  if (endpoint.startsWith('http')) {
-    return endpoint;
-  }
-  
-  // Remove leading slash if present to avoid double slashes
-  const formattedEndpoint = endpoint.startsWith('/') 
-    ? endpoint.substring(1) 
-    : endpoint;
-    
-  return `${API_URL}/${formattedEndpoint}`;
-};
+// Query function type for React Query
+type UnauthorizedBehavior = "returnNull" | "throw";
 
 // Main API request function for mutations
 export async function apiRequest(
   method: string,
   endpoint: string,
   data?: unknown | undefined,
-): Promise<Response> {
-  const url = getFullUrl(endpoint);
-  const token = getAuthToken();
-  
-  // Prepare headers with Content-Type and Authorization if token exists
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  };
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  
+): Promise<AxiosResponse> {
   try {
-    const res = await fetch(url, {
-      method,
-      headers,
-      mode: 'cors',
-      body: data ? JSON.stringify(data) : undefined,
-    });
-
-    await throwIfResNotOk(res);
-    return res;
+    let response;
+    
+    switch (method.toUpperCase()) {
+      case 'GET':
+        response = await api.get(endpoint);
+        break;
+      case 'POST':
+        response = await api.post(endpoint, data);
+        break;
+      case 'PUT':
+        response = await api.put(endpoint, data);
+        break;
+      case 'DELETE':
+        response = await api.delete(endpoint);
+        break;
+      default:
+        throw new Error(`Unsupported method: ${method}`);
+    }
+    
+    return response;
   } catch (error) {
     console.error("API Request error:", error);
     throw error;
@@ -75,40 +39,26 @@ export async function apiRequest(
 }
 
 // Query function type for React Query
-type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    // Extract the endpoint from the query key
-    const endpoint = queryKey[0] as string;
-    const url = getFullUrl(endpoint);
-    const token = getAuthToken();
-    
-    // Prepare headers with Authorization if token exists
-    const headers: Record<string, string> = {
-      'Accept': 'application/json'
-    };
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
     try {
-      const res = await fetch(url, { 
-        headers,
-        mode: 'cors'
-      });
-
-      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-        return null;
-      }
-
-      await throwIfResNotOk(res);
-      return await res.json();
+      // Extract the endpoint from the query key
+      const endpoint = queryKey[0] as string;
+      
+      const response = await api.get(endpoint);
+      return response.data;
     } catch (error) {
       console.error("Query fetch error:", error);
+      
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        if (unauthorizedBehavior === "returnNull") {
+          return null;
+        }
+      }
+      
       throw error;
     }
   };
