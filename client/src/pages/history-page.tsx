@@ -15,13 +15,35 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 
+// Backend probe result format
+interface BackendProbeResult {
+  id: number;
+  user_id: number;
+  probe_type: string;
+  target: string;
+  status: string;
+  result: string | null;
+  created_at: string;
+}
+
 export default function HistoryPage() {
   const [selectedProbe, setSelectedProbe] = useState<ProbeResult | null>(null);
   
-  // Fetch all probe results
-  const { data: probeResults, isLoading } = useQuery<ProbeResult[]>({
-    queryKey: ["/api/probes"],
+  // Fetch all probe results from AWS backend
+  const { data: backendProbeResults, isLoading } = useQuery<BackendProbeResult[]>({
+    queryKey: ["probes/history"],
   });
+  
+  // Transform backend results to frontend format
+  const probeResults: ProbeResult[] = (backendProbeResults || []).map(probe => ({
+    id: probe.id,
+    userId: probe.user_id,
+    probeType: probe.probe_type,
+    target: probe.target,
+    status: probe.status,
+    result: probe.result,
+    createdAt: new Date(probe.created_at)
+  }));
   
   const handleViewDetails = (probe: ProbeResult) => {
     setSelectedProbe(probe);
