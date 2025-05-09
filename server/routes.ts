@@ -7,8 +7,14 @@ import { probeTypes, probeStatus } from "@shared/schema";
 import { createProxyMiddleware, RequestHandler } from 'http-proxy-middleware';
 import { IncomingMessage, ServerResponse } from 'http';
 import { log } from './vite';
+import { initProxyLog, logProxyRequest, logProxyError, getRecentProxyLogs } from './proxy-logger';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize proxy logs if in development mode
+  if (process.env.NODE_ENV === 'development') {
+    await initProxyLog();
+  }
+  
   // Set up authentication routes
   setupAuth(app);
 
@@ -250,6 +256,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
+  // Environment test endpoint (for debugging the proxy)
+  app.get("/api/env", (req, res) => {
+    res.json({
+      environment: process.env.NODE_ENV || 'unknown',
+      timestamp: new Date().toISOString(),
+      message: 'Environment test endpoint',
+      proxy: process.env.PROXY_TARGET || 'not configured',
+      headers: req.headers,
+    });
+  });
+  
+  // Public test endpoint (no authentication required)
+  app.get("/api/public/test", (req, res) => {
+    res.json({
+      success: true,
+      message: 'This is a public test endpoint that can be accessed without authentication',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'unknown',
+    });
+  });
+  
+  // Endpoint to get proxy logs (development only)
+  app.get("/api/debug/proxy-logs", async (req, res) => {
+    if (process.env.NODE_ENV !== 'development') {
+      return res.status(403).json({ message: 'This endpoint is only available in development mode' });
+    }
+    
+    try {
+      const lines = req.query.lines ? parseInt(req.query.lines as string) : 50;
+      const logs = await getRecentProxyLogs(lines);
+      res.json({ logs });
+    } catch (error) {
+      res.status(500).json({ 
+        message: 'Failed to retrieve proxy logs', 
+        error: (error as Error).message 
+      });
+    }
+  });
+  
   // Setup proxy for development environment
   if (process.env.NODE_ENV === 'development') {
     log('Setting up API proxy for development mode', 'proxy');
@@ -264,7 +309,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const apiProxy = createProxyMiddleware({
         target: proxyTarget,
         changeOrigin: true,
-        pathRewrite: { '^/api': '' }  // Remove /api prefix when forwarding
+        pathRewrite: { '^/api': '' },  // Remove /api prefix when forwarding
+        onProxyReq: async (proxyReq: any, req: any) => {
+          // Log the proxy request
+          const method = req.method;
+          const path = req.url;
+          await logProxyRequest(method, path, proxyTarget);
+          log(`Proxying ${method} ${path} -> ${proxyTarget}`, 'proxy');
+        },
+        onError: async (err: any, req: any, res: any) => {
+          // Log proxy errors
+          await logProxyError(`Proxy error for ${req.method} ${req.url}`, err);
+          
+          if (!res.headersSent) {
+            res.status(500).json({ 
+              message: 'Proxy error', 
+              error: err.message,
+              target: proxyTarget
+            });
+          }
+        }
       });
       
       // Apply the proxy middleware to /api routes
