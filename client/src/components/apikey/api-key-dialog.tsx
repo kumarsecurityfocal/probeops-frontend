@@ -32,12 +32,27 @@ const apiKeySchema = z.object({
 type ApiKeyFormValues = z.infer<typeof apiKeySchema>;
 
 // Response from backend when creating an API key
+// This interface accounts for different possible response formats from the backend
 interface ApiKeyResponse {
-  id: number;
-  user_id: number;
-  name: string;
-  key: string;
-  created_at: string;
+  // Direct fields in case of flat response
+  id?: number;
+  user_id?: number;
+  name?: string;
+  key?: string;
+  created_at?: string;
+  
+  // Fields in case of nested response format
+  apiKey?: {
+    id: number;
+    user_id: number;
+    name: string;
+    key: string;
+    created_at: string;
+  };
+  
+  // Fields in case of an alternative api_key format
+  api_key?: string;
+  message?: string;
 }
 
 export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
@@ -69,24 +84,88 @@ export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
     },
     onSuccess: (data: ApiKeyResponse) => {
       console.log("Successfully created API key:", data);
-      // Transform the backend response to match our frontend ApiKey type
-      const apiKey: ApiKey = {
-        id: data.id,
-        userId: data.user_id,
-        name: data.name,
-        key: data.key,
-        createdAt: new Date(data.created_at)
-      };
       
-      // Show success toast notification
-      toast({
-        title: "API Key Created",
-        description: `Your new API key "${apiKey.name}" has been created successfully`,
-        variant: "default",
-      });
+      // Handle different possible response formats
+      let apiKey: ApiKey;
+      const formName = form.getValues().name || "New API Key";
       
-      setNewApiKey(apiKey);
-      queryClient.invalidateQueries({ queryKey: ["apikeys"] });
+      try {
+        if (data.apiKey && typeof data.apiKey === 'object') {
+          // Response with nested apiKey object
+          apiKey = {
+            id: data.apiKey.id,
+            userId: data.apiKey.user_id,
+            name: data.apiKey.name,
+            key: data.apiKey.key,
+            createdAt: new Date(data.apiKey.created_at)
+          };
+        } else if (data.api_key && typeof data.api_key === 'string') {
+          // Response with api_key string format (e.g. from register response)
+          apiKey = {
+            id: 0, // Will be refreshed on next list fetch
+            userId: 0, // Will be refreshed on next list fetch
+            name: formName,
+            key: data.api_key,
+            createdAt: new Date()
+          };
+        } else if (data.key && typeof data.key === 'string') {
+          // Flat response structure with direct fields
+          apiKey = {
+            id: typeof data.id === 'number' ? data.id : 0,
+            userId: typeof data.user_id === 'number' ? data.user_id : 0,
+            name: typeof data.name === 'string' ? data.name : formName,
+            key: data.key,
+            createdAt: typeof data.created_at === 'string' ? new Date(data.created_at) : new Date()
+          };
+        } else {
+          // If we get here, we have an unexpected response format
+          // Create a fallback with just the form name and a placeholder for the key
+          console.warn("Using fallback API key handling for unexpected response format:", data);
+          
+          let keyFromResponse = "";
+          
+          // Try to extract key from various possible locations
+          if (typeof data === 'object') {
+            if (typeof data.api_key === 'string') keyFromResponse = data.api_key;
+            else if (typeof data.key === 'string') keyFromResponse = data.key;
+            else if (data.apiKey && typeof data.apiKey.key === 'string') keyFromResponse = data.apiKey.key;
+            // Try to handle case where the entire response might be the key string
+            else if (typeof data.toString === 'function' && data.toString().length > 10) {
+              keyFromResponse = data.toString();
+            }
+          }
+          
+          if (!keyFromResponse) {
+            throw new Error("Could not extract API key from server response");
+          }
+          
+          apiKey = {
+            id: 0,
+            userId: 0,
+            name: formName,
+            key: keyFromResponse,
+            createdAt: new Date()
+          };
+        }
+        
+        // Show success toast notification
+        toast({
+          title: "API Key Created",
+          description: `Your new API key "${apiKey.name}" has been created successfully`,
+          variant: "default",
+        });
+        
+        // Update state and invalidate queries
+        setNewApiKey(apiKey);
+        queryClient.invalidateQueries({ queryKey: ["apikeys"] });
+      } catch (error) {
+        console.error("Error processing API key response:", error, data);
+        toast({
+          title: "Error Processing API Key",
+          description: "There was an error processing the API key response. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
     onError: (error: Error) => {
       console.error("API key creation error in mutation:", error);
