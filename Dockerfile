@@ -12,8 +12,14 @@ RUN npm ci
 # Copy application code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Set production environment for the build
+ENV NODE_ENV=production
+ENV VITE_API_URL=http://probeops-api:5000
+
+# Build the application using production environment
+# This will ensure the correct API URL is baked into the build
+RUN echo "Building with API URL: $VITE_API_URL"
+RUN NODE_ENV=production npm run build
 # Debug: List the built files
 RUN echo "Listing build files:" && find /app/dist -type f
 # Update the directory structure to match what prod-server.js expects
@@ -31,6 +37,7 @@ WORKDIR /app
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV VITE_API_URL=http://probeops-api:5000
 
 # Install wget for health check and other utilities
 RUN apk --no-cache add wget curl

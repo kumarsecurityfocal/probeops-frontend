@@ -84,22 +84,31 @@ A React frontend application for network diagnostics and monitoring that connect
    docker network create probeops-network
    ```
 
-3. The `docker-compose.frontend.yml` file is configured to use the backend container:
+3. Ensure your backend container is running and correctly named:
+   ```bash
+   # Backend container must be running with the name 'probeops-api'
+   # and connected to the 'probeops-network' network
+   ```
+
+4. The `docker-compose.frontend.yml` file is already configured to use the backend container:
    ```yaml
    environment:
      - VITE_API_URL=http://probeops-api:5000
+   networks:
+     - probeops-network
    ```
    
-   Note: This assumes your backend container is named `probeops-api` and is connected to the same `probeops-network`. Adjust if needed.
+   Note: This configuration uses Docker's DNS resolution to reach the backend container by its service name.
 
-4. Build and start the container with Docker Compose:
+5. Build and start the container with Docker Compose:
    ```bash
-   docker-compose -f docker-compose.frontend.yml up -d
+   # Clean build ensures correct API URL is baked into the frontend
+   docker compose -f docker-compose.frontend.yml up -d --build
    ```
 
-5. To stop the service:
+6. To stop the service:
    ```bash
-   docker-compose -f docker-compose.frontend.yml down
+   docker compose -f docker-compose.frontend.yml down
    ```
 
 #### Option 2: Direct Node.js Installation
@@ -211,3 +220,5 @@ The backend API provides endpoints for:
 5. Added comprehensive environment configuration
 6. Fixed CommonJS module compatibility issues with serve-handler using proper ES Module imports
 7. Added Docker network configuration for container-to-container communication
+8. Ensured API URL is correctly baked into the production build using Docker build arguments
+9. Created .env.production file with Docker-specific network settings

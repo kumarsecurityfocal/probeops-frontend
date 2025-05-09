@@ -16,9 +16,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Set this to the backend container name for Docker networking
+      # Backend container hostname for Docker networking
       - VITE_API_URL=http://probeops-api:5000
       - PORT=3000
+      # Ensure production build
+      - NODE_ENV=production
     restart: unless-stopped
     # Optional volume if you want to persist logs
     # volumes:
