@@ -90,11 +90,11 @@ A React frontend application for network diagnostics and monitoring that connect
    # and connected to the 'probeops-network' network
    ```
 
-4. The `docker-compose.frontend.yml` file is already configured to use the backend public IP:
+4. The `docker-compose.frontend.yml` file is already configured to use the NGINX NPS server with HTTPS:
    ```yaml
    # Environment variables for browser-side API calls
    environment:
-     - VITE_API_URL=http://35.173.110.195:5000
+     - VITE_API_URL=https://probeops.com
    # Network for container-to-container communication  
    networks:
      - probeops-network
@@ -106,7 +106,7 @@ A React frontend application for network diagnostics and monitoring that connect
        external: true  # This ensures we connect to the existing network
    ```
    
-   Note: We use the public IP instead of the container name because the browser makes API calls directly, not from within the Docker network.
+   Note: We use the domain name with HTTPS instead of direct IP access for improved security and flexibility. This allows proper SSL/TLS encryption for all API calls.
 
 5. Build and start the container with Docker Compose:
    ```bash
@@ -135,7 +135,7 @@ A React frontend application for network diagnostics and monitoring that connect
 3. Update `.env` file with production settings:
    ```
    # Frontend configuration - set this to your backend API URL
-   VITE_API_URL=http://172.16.0.80:5000
+   VITE_API_URL=https://probeops.com
    ```
 
 4. Run the production script (builds and starts the server):
@@ -230,4 +230,4 @@ The backend API provides endpoints for:
 7. Added Docker network configuration for container-to-container communication
 8. Ensured API URL is correctly baked into the production build using Docker build arguments
 9. Created .env.production file with Docker-specific network settings
-10. Used public IP for API endpoint to allow browser-side API calls
+10. Used HTTPS with domain name (probeops.com) for secure API communication
