@@ -57,7 +57,7 @@ app.use((req, res, next) => {
   }
 
   // IMPORTANT: For production deployment configuration
-  // 1. Change this port to 3000 or another port that doesn't conflict with the backend (port 5000)
+  // 1. Use port 5000 as default for Replit (this can be changed via PORT env var for production)
   // 2. Make sure VITE_API_URL in your environment points to the correct backend URL
   // 3. Ensure your backend has CORS configured to allow requests from your frontend domain
   const port = process.env.PORT || 5000;

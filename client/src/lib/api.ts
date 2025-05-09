@@ -1,21 +1,20 @@
 import axios from 'axios';
 
 // API URL Configuration:
-// - In development: Use relative '/api' URLs that will be handled by the development proxy
-// - In production: Use the full URL from VITE_API_URL environment variable (https://probeops.com)
+// - We now directly use the API URL from VITE_API_URL environment variable in all environments
+// - In production: Defaults to 'https://probeops.com/api'
+// - In development: Configure .env.development with your backend URL (e.g., http://localhost:5000)
 //
 // This setup allows us to:
-// 1. Use the same API endpoints code in both development and production
-// 2. Avoid CORS issues during development by using the proxy
-// 3. Have a clean separation between environments
+// 1. Consistently use the same API URL configuration method in all environments
+// 2. No longer rely on a local development proxy
+// 3. Allow for NGINX Proxy Manager to handle routing in production
 
-// Use relative URLs in development (will be handled by proxy) or full URL in production
 // Log the exact VITE_API_URL being used for debugging
 console.log('VITE_API_URL from environment:', import.meta.env.VITE_API_URL);
 
-const API_URL = import.meta.env.PROD 
-  ? (import.meta.env.VITE_API_URL || 'https://probeops.com/api') 
-  : '/api';
+// Always use the configured API URL regardless of environment
+const API_URL = import.meta.env.VITE_API_URL || 'https://probeops.com/api';
 
 console.log(`API Configuration: ${import.meta.env.PROD ? 'Production' : 'Development'}`);
 console.log('Using API URL:', API_URL);
