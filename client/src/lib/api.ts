@@ -10,8 +10,11 @@ import axios from 'axios';
 // 3. Have a clean separation between environments
 
 // Use relative URLs in development (will be handled by proxy) or full URL in production
+// Log the exact VITE_API_URL being used for debugging
+console.log('VITE_API_URL from environment:', import.meta.env.VITE_API_URL);
+
 const API_URL = import.meta.env.PROD 
-  ? (import.meta.env.VITE_API_URL || 'https://probeops.com') 
+  ? (import.meta.env.VITE_API_URL || 'https://probeops.com/api') 
   : '/api';
 
 console.log(`API Configuration: ${import.meta.env.PROD ? 'Production' : 'Development'}`);

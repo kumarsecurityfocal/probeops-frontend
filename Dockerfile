@@ -14,8 +14,7 @@ COPY . .
 
 # Set production environment for the build
 ENV NODE_ENV=production
-# Using the domain with HTTPS instead of IP for improved security
-ENV VITE_API_URL=https://probeops.com/api
+# API URL will be provided from .env.production during build
 
 # Build the application using production environment
 # This will ensure the correct API URL is baked into the build
@@ -38,8 +37,7 @@ WORKDIR /app
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
-# Using the domain with HTTPS instead of IP for improved security
-ENV VITE_API_URL=https://probeops.com/api
+# API URL will be provided from .env.production via docker-compose env_file
 
 # Install wget for health check and other utilities
 RUN apk --no-cache add wget curl

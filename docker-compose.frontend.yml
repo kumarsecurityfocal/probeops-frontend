@@ -15,12 +15,9 @@ services:
     container_name: probeops-frontend
     ports:
       - "3000:3000"
-    environment:
-      # NGINX NPS server with HTTPS for secure communication
-      - VITE_API_URL=https://probeops.com/api
-      - PORT=3000
-      # Ensure production build
-      - NODE_ENV=production
+    # Use production environment variables from .env.production file
+    env_file:
+      - .env.production
     restart: unless-stopped
     # Optional volume if you want to persist logs
     # volumes:
