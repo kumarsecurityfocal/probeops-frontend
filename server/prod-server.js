@@ -21,6 +21,19 @@ const PORT = process.env.PORT || 3000;
 // Path to the built client files
 const clientDistPath = path.join(__dirname, '../dist/client');
 
+// Debug directory contents
+console.log('Looking for client files at:', clientDistPath);
+console.log('Available directories:');
+try {
+  const dirs = fs.readdirSync(path.join(__dirname, '..'));
+  console.log('Root dir:', dirs);
+  if (fs.existsSync(path.join(__dirname, '../dist'))) {
+    console.log('Dist dir:', fs.readdirSync(path.join(__dirname, '../dist')));
+  }
+} catch (err) {
+  console.error('Error listing directories:', err);
+}
+
 // Make sure the directory exists
 if (!fs.existsSync(clientDistPath)) {
   console.error(`Error: Build directory ${clientDistPath} does not exist!`);

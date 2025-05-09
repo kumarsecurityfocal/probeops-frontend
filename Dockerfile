@@ -14,6 +14,13 @@ COPY . .
 
 # Build the application
 RUN npm run build
+# Debug: List the built files
+RUN echo "Listing build files:" && find /app/dist -type f
+# Update the directory structure to match what prod-server.js expects
+RUN mkdir -p /app/dist/client
+RUN cp -r /app/dist/public/* /app/dist/client/
+# Debug: Verify the final client directory
+RUN echo "Verifying client directory:" && find /app/dist/client -type f
 
 # Stage 2: Create production image
 FROM node:18-alpine AS production
@@ -38,6 +45,9 @@ COPY --from=builder /app/package*.json ./
 
 # Install only production dependencies
 RUN npm ci --omit=dev
+
+# Debug: Verify the directory structure in the production image
+RUN echo "Checking final directory structure:" && find /app/dist -type d && echo "Files:" && find /app/dist -type f
 
 # Expose port
 EXPOSE 3000
