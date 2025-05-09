@@ -56,11 +56,10 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // IMPORTANT: For production, change this port to avoid conflicts with the backend
-  // In Replit development, we're using port 5000 as required by the Replit environment
-  // For production deployment, consider changing to another port (e.g., 3000)
-  // NOTE TO DEVOPS: This should be port 3000 or another port in production 
-  // to avoid conflict with the AWS backend running on port 5000
+  // IMPORTANT: For production deployment configuration
+  // 1. Change this port to 3000 or another port that doesn't conflict with the backend (port 5000)
+  // 2. Make sure VITE_API_URL in your environment points to the correct backend URL
+  // 3. Ensure your backend has CORS configured to allow requests from your frontend domain
   const port = process.env.PORT || 5000;
   server.listen({
     port: Number(port),
