@@ -83,9 +83,10 @@ export function ProbeCard({ title, description, icon, type }: ProbeCardProps) {
   const pingMutation = useMutation({
     mutationFn: async (data: PingFormValues) => {
       const res = await apiRequest("POST", "probes/ping", data);
-      return await res.json();
+      return res.data; // Axios already parses JSON
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Ping response:", data);
       toast({
         title: "Ping completed",
         description: "The ping probe was executed successfully",
@@ -106,9 +107,10 @@ export function ProbeCard({ title, description, icon, type }: ProbeCardProps) {
   const tracerouteMutation = useMutation({
     mutationFn: async (data: TracerouteFormValues) => {
       const res = await apiRequest("POST", "probes/traceroute", data);
-      return await res.json();
+      return res.data; // Axios already parses JSON
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Traceroute response:", data);
       toast({
         title: "Traceroute completed",
         description: "The traceroute probe was executed successfully",
@@ -129,9 +131,10 @@ export function ProbeCard({ title, description, icon, type }: ProbeCardProps) {
   const dnsMutation = useMutation({
     mutationFn: async (data: DnsFormValues) => {
       const res = await apiRequest("POST", "probes/dns", data);
-      return await res.json();
+      return res.data; // Axios already parses JSON
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("DNS response:", data);
       toast({
         title: "DNS lookup completed",
         description: "The DNS lookup probe was executed successfully",
@@ -152,9 +155,10 @@ export function ProbeCard({ title, description, icon, type }: ProbeCardProps) {
   const whoisMutation = useMutation({
     mutationFn: async (data: WhoisFormValues) => {
       const res = await apiRequest("POST", "probes/whois", data);
-      return await res.json();
+      return res.data; // Axios already parses JSON
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("WHOIS response:", data);
       toast({
         title: "WHOIS lookup completed",
         description: "The WHOIS lookup probe was executed successfully",
