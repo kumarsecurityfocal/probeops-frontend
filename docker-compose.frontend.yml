@@ -1,0 +1,23 @@
+# ProbeOps Frontend Docker Compose Configuration
+# This file is specifically for deploying the frontend component
+# To deploy: docker-compose -f docker-compose.frontend.yml up -d
+
+version: '3.8'
+
+services:
+  # Frontend React application service
+  probeops-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: probeops-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # Set this to your backend API URL
+      - VITE_API_URL=http://172.16.0.80:5000
+      - PORT=3000
+    restart: unless-stopped
+    # Optional volume if you want to persist logs
+    # volumes:
+    #   - ./logs:/app/logs

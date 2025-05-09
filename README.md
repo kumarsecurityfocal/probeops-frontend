@@ -70,7 +70,7 @@ A React frontend application for network diagnostics and monitoring that connect
 
 5. Access the application at http://your-server-ip:3000
 
-#### Option 1b: Docker Compose Deployment
+#### Option 1b: Docker Compose Frontend Deployment
 
 1. Clone the repository and navigate to the project directory:
    ```bash
@@ -78,7 +78,7 @@ A React frontend application for network diagnostics and monitoring that connect
    cd probeops-frontend
    ```
 
-2. Edit the `docker-compose.yml` file to update the `VITE_API_URL` environment variable if needed:
+2. Edit the `docker-compose.frontend.yml` file to update the `VITE_API_URL` environment variable if needed:
    ```yaml
    environment:
      - VITE_API_URL=http://your-backend-url:5000
@@ -86,12 +86,12 @@ A React frontend application for network diagnostics and monitoring that connect
 
 3. Build and start the container with Docker Compose:
    ```bash
-   docker-compose up -d
+   docker-compose -f docker-compose.frontend.yml up -d
    ```
 
 4. To stop the service:
    ```bash
-   docker-compose down
+   docker-compose -f docker-compose.frontend.yml down
    ```
 
 #### Option 2: Direct Node.js Installation
