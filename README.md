@@ -201,3 +201,4 @@ The backend API provides endpoints for:
 3. Added JWT token handling for authentication
 4. Improved error handling and response mapping
 5. Added comprehensive environment configuration
+6. Fixed CommonJS module compatibility issues with serve-handler using proper ES Module imports

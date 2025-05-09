@@ -1,7 +1,12 @@
 // Production server script using the serve package
 // This script serves the static build files on the specified port
 
-import { handler } from 'serve-handler';
+// Fix for CommonJS module compatibility
+// The serve-handler package is a CommonJS module which may not support all module.exports as named exports
+// This fixes the "SyntaxError: Named export 'handler' not found" error
+import pkg from 'serve-handler';
+const { handler } = pkg;
+
 import http from 'http';
 import fs from 'fs';
 import path from 'path';

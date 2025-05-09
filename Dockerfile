@@ -33,6 +33,9 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server/prod-server.js ./server/prod-server.js
 COPY --from=builder /app/package*.json ./
 
+# Comment explaining the CommonJS compatibility fix
+# The prod-server.js file has been updated to use proper ES Module import for serve-handler
+
 # Install only production dependencies
 RUN npm ci --omit=dev
 
