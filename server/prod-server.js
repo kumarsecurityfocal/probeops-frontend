@@ -4,8 +4,9 @@
 // Fix for CommonJS module compatibility
 // The serve-handler package is a CommonJS module which may not support all module.exports as named exports
 // This fixes the "SyntaxError: Named export 'handler' not found" error
+// AND ensures handler is the correct function (not undefined)
 import pkg from 'serve-handler';
-const { handler } = pkg;
+const handler = pkg.default || pkg;
 
 import http from 'http';
 import fs from 'fs';
