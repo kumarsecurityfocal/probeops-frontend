@@ -92,13 +92,21 @@ A React frontend application for network diagnostics and monitoring that connect
 
 4. The `docker-compose.frontend.yml` file is already configured to use the backend container:
    ```yaml
+   # Environment variables for container communication
    environment:
      - VITE_API_URL=http://probeops-api:5000
+   # Network connecting to the backend container  
    networks:
      - probeops-network
+   
+   # Network configuration (CRITICAL for container communication)
+   networks:
+     probeops-network:
+       name: probeops-network
+       external: true  # This ensures we connect to the existing network
    ```
    
-   Note: This configuration uses Docker's DNS resolution to reach the backend container by its service name.
+   Note: The `external: true` flag is CRITICAL - it tells Docker to use the existing network where your backend is running.
 
 5. Build and start the container with Docker Compose:
    ```bash

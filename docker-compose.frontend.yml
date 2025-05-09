@@ -31,7 +31,8 @@ services:
 # Define networks to allow communication with the backend
 networks:
   probeops-network:
+    # Network name must match exactly what backend uses
     name: probeops-network
-    # Using external: true allows this compose file to connect to the existing network
-    # created by the backend docker-compose
+    # This is the critical flag - it tells Docker to use the existing network
+    # instead of creating a new one with the same name
     external: true
