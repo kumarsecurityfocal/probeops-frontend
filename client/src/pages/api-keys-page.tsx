@@ -6,8 +6,9 @@ import { ApiKeyDialog } from "@/components/apikey/api-key-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, AlertTriangle, RefreshCw } from "lucide-react";
 import { ApiKey } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
 // Interface for backend API key structure
 interface BackendApiKey {
@@ -21,10 +22,21 @@ interface BackendApiKey {
 
 export default function ApiKeysPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
   
-  // Fetch API keys directly from backend
-  const { data: backendResponse, isLoading, error } = useQuery<any, Error>({
-    queryKey: ["/apikeys"]
+  // Fetch API keys directly from backend with improved options
+  const { 
+    data: backendResponse, 
+    isLoading, 
+    error, 
+    isError,
+    refetch,
+    isFetching
+  } = useQuery<any, Error>({
+    queryKey: ["/apikeys"],
+    retry: 2,  // Retry failed requests twice
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
+    refetchOnWindowFocus: false
   });
   
   // Log the response for debugging
@@ -64,6 +76,15 @@ export default function ApiKeysPage() {
     description: key.description
   }));
   
+  // Handler for retry button
+  const handleRetry = () => {
+    toast({
+      title: "Retrying connection...",
+      description: "Attempting to reconnect to the server",
+    });
+    refetch();
+  };
+  
   return (
     <MainLayout>
       <div className="py-6">
@@ -73,10 +94,18 @@ export default function ApiKeysPage() {
               <h1 className="text-2xl font-semibold text-gray-900">API Keys</h1>
               <p className="mt-1 text-sm text-gray-500">Manage your API keys for external applications</p>
             </div>
-            <Button onClick={() => setIsDialogOpen(true)} className="flex items-center">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create New Key
-            </Button>
+            <div className="flex gap-2">
+              {isFetching && !isLoading && (
+                <Button variant="outline" disabled>
+                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  Refreshing...
+                </Button>
+              )}
+              <Button onClick={() => setIsDialogOpen(true)} className="flex items-center">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create New Key
+              </Button>
+            </div>
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
@@ -93,6 +122,22 @@ export default function ApiKeysPage() {
                         <Skeleton className="h-6 w-20" />
                       </div>
                     ))}
+                  </div>
+                </CardContent>
+              ) : isError ? (
+                <CardContent className="p-6">
+                  <div className="text-center py-8 space-y-4">
+                    <div className="mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-red-100">
+                      <AlertTriangle className="h-8 w-8 text-red-600" />
+                    </div>
+                    <h3 className="text-lg font-medium">Failed to load API keys</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                      {error?.message || "There was an error connecting to the server. Please try again."}
+                    </p>
+                    <Button onClick={handleRetry} variant="outline" className="mt-2">
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Retry
+                    </Button>
                   </div>
                 </CardContent>
               ) : (

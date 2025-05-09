@@ -63,9 +63,11 @@ export function ApiKeyTable({ apiKeys }: ApiKeyTableProps) {
     onSuccess: (data) => {
       console.log("Successfully deleted API key:", data);
       
+      // Improved success message with API key name
       toast({
         title: "API key deleted",
-        description: "The API key has been successfully deleted",
+        description: `The API key "${keyToDelete?.name}" has been successfully deleted`,
+        variant: "default",
       });
       queryClient.invalidateQueries({ queryKey: ["apikeys"] });
       setKeyToDelete(null);
@@ -73,9 +75,25 @@ export function ApiKeyTable({ apiKeys }: ApiKeyTableProps) {
     onError: (error: Error) => {
       console.error("API key deletion error in mutation:", error);
       
+      // Generate a more user-friendly error message based on the error
+      let errorMessage = error.message;
+      
+      // Handle common error scenarios with more descriptive messages
+      if (errorMessage.includes("400")) {
+        errorMessage = "Invalid API key ID. The key might have been already deleted.";
+      } else if (errorMessage.includes("401") || errorMessage.includes("403")) {
+        errorMessage = "You're not authorized to delete this API key. Please log in again.";
+      } else if (errorMessage.includes("404")) {
+        errorMessage = "API key not found. It may have been already deleted.";
+      } else if (errorMessage.includes("Network Error") || errorMessage.includes("CORS")) {
+        errorMessage = "Network connection issue. Please check your internet connection and try again.";
+      } else if (errorMessage.includes("500")) {
+        errorMessage = "Server error occurred. Our team has been notified. Please try again later.";
+      }
+      
       toast({
         title: "Failed to delete API key",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },

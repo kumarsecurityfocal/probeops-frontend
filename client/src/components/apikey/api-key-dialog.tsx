@@ -78,14 +78,36 @@ export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
         createdAt: new Date(data.created_at)
       };
       
+      // Show success toast notification
+      toast({
+        title: "API Key Created",
+        description: `Your new API key "${apiKey.name}" has been created successfully`,
+        variant: "default",
+      });
+      
       setNewApiKey(apiKey);
       queryClient.invalidateQueries({ queryKey: ["apikeys"] });
     },
     onError: (error: Error) => {
       console.error("API key creation error in mutation:", error);
+      
+      // Generate a more user-friendly error message based on the error
+      let errorMessage = error.message;
+      
+      // Handle common error scenarios with more descriptive messages
+      if (errorMessage.includes("400")) {
+        errorMessage = "Invalid API key details. Please check your input and try again.";
+      } else if (errorMessage.includes("401") || errorMessage.includes("403")) {
+        errorMessage = "You're not authorized to create API keys. Please log in again.";
+      } else if (errorMessage.includes("Network Error") || errorMessage.includes("CORS")) {
+        errorMessage = "Network connection issue. Please check your internet connection and try again.";
+      } else if (errorMessage.includes("500")) {
+        errorMessage = "Server error occurred. Our team has been notified. Please try again later.";
+      }
+      
       toast({
         title: "Failed to create API key",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },
