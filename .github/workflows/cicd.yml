@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:  # Allows manual triggering
+  schedule:
+    - cron: '0 8 * * 1'  # Run every Monday at 8:00 AM UTC
 
 env:
   NODE_VERSION: '20'
@@ -94,6 +96,7 @@ jobs:
           
     # Verify the deployment
     - name: Verify deployment
+      id: verify
       if: ${{ success() && (secrets.DEPLOY_SSH_KEY != '') }}
       run: |
         chmod +x .github/scripts/verify-deployment.sh

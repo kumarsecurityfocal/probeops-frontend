@@ -29,6 +29,15 @@ To use this CI/CD pipeline, you need to configure the following secrets in your 
 - `VITE_API_URL`: The URL of your backend API (defaults to 'https://probeops.com/api' if not set)
 - `DEPLOYMENT_URL`: The URL to verify deployment (defaults to 'https://probeops.com' if not set)
 
+### Notification Secrets
+
+- `SLACK_WEBHOOK_URL`: Slack webhook URL for notifications
+- `NOTIFICATION_EMAIL`: Email address to receive deployment notifications
+- `SMTP_SERVER`: SMTP server for sending email notifications
+- `SMTP_PORT`: SMTP port for sending email notifications
+- `SMTP_USERNAME`: SMTP username for authentication
+- `SMTP_PASSWORD`: SMTP password for authentication
+
 ## How to Setup
 
 1. Go to your GitHub repository
