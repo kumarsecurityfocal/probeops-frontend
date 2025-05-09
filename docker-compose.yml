@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  probeops-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: probeops-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://172.16.0.80:5000
+      - PORT=3000
+    restart: unless-stopped

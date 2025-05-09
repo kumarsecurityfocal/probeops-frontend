@@ -35,7 +35,66 @@ A React frontend application for network diagnostics and monitoring that connect
 - Node.js 16+ and npm
 - Backend API running at a known URL
 
-### Simple AWS Deployment
+### Deployment Options
+
+#### Option 1: Docker Deployment (Recommended)
+
+1. Clone the repository and navigate to the project directory:
+   ```bash
+   git clone https://github.com/yourusername/probeops-frontend.git
+   cd probeops-frontend
+   ```
+
+2. Create a `.env.production` file with your backend API URL:
+   ```
+   # Frontend configuration - set this to your backend API URL
+   VITE_API_URL=http://172.16.0.80:5000
+   ```
+
+3. Build the Docker image:
+   ```bash
+   docker build -t probeops-frontend:latest .
+   ```
+
+4. Run the Docker container:
+   ```bash
+   # Run on default port 3000
+   docker run -d -p 3000:3000 --name probeops-frontend probeops-frontend:latest
+   
+   # Or use a different port (e.g., 4000)
+   docker run -d -p 4000:3000 --name probeops-frontend probeops-frontend:latest
+   
+   # Run with environment variables
+   docker run -d -p 3000:3000 -e VITE_API_URL=http://your-backend-url:5000 --name probeops-frontend probeops-frontend:latest
+   ```
+
+5. Access the application at http://your-server-ip:3000
+
+#### Option 1b: Docker Compose Deployment
+
+1. Clone the repository and navigate to the project directory:
+   ```bash
+   git clone https://github.com/yourusername/probeops-frontend.git
+   cd probeops-frontend
+   ```
+
+2. Edit the `docker-compose.yml` file to update the `VITE_API_URL` environment variable if needed:
+   ```yaml
+   environment:
+     - VITE_API_URL=http://your-backend-url:5000
+   ```
+
+3. Build and start the container with Docker Compose:
+   ```bash
+   docker-compose up -d
+   ```
+
+4. To stop the service:
+   ```bash
+   docker-compose down
+   ```
+
+#### Option 2: Direct Node.js Installation
 
 1. Clone the repository and navigate to the project directory:
    ```bash
@@ -63,7 +122,7 @@ A React frontend application for network diagnostics and monitoring that connect
    ./start-prod.sh 4000
    ```
 
-This will:
+Both options will:
 - Build the application
 - Start a production server on the specified port (default: 3000)
 - Configure the server to serve static files and handle client-side routing
