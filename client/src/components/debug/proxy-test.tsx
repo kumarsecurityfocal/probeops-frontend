@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
-import axios from "axios";
+import { useAuth } from "@/hooks/use-auth";
+import { Loader2, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import api from "@/lib/api";
 
 export function ProxyTest() {
   const { toast } = useToast();
