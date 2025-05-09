@@ -55,10 +55,20 @@ export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
   
   const createApiKeyMutation = useMutation({
     mutationFn: async (data: ApiKeyFormValues) => {
-      const res = await apiRequest("POST", "apikeys", data);
-      return await res.json();
+      try {
+        const res = await apiRequest("POST", "apikeys", data);
+        // Log the raw response to help with debugging
+        console.log("Raw API key creation response:", res);
+        
+        // Axios responses contain data directly, no need to call .json()
+        return res.data;
+      } catch (error) {
+        console.error("API key creation error:", error);
+        throw error;
+      }
     },
     onSuccess: (data: ApiKeyResponse) => {
+      console.log("Successfully created API key:", data);
       // Transform the backend response to match our frontend ApiKey type
       const apiKey: ApiKey = {
         id: data.id,
@@ -72,6 +82,7 @@ export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
       queryClient.invalidateQueries({ queryKey: ["apikeys"] });
     },
     onError: (error: Error) => {
+      console.error("API key creation error in mutation:", error);
       toast({
         title: "Failed to create API key",
         description: error.message,

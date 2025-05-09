@@ -23,7 +23,7 @@ export default function ApiKeysPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   // Fetch API keys directly from backend
-  const { data: backendResponse, isLoading } = useQuery<any, Error>({
+  const { data: backendResponse, isLoading, error } = useQuery<any, Error>({
     queryKey: ["/apikeys"]
   });
   
@@ -31,12 +31,28 @@ export default function ApiKeysPage() {
   if (backendResponse) {
     console.log("API keys response:", backendResponse);
   }
+  
+  // Log any errors to help with debugging
+  if (error) {
+    console.error("Error fetching API keys:", error);
+  }
 
-  // Extract the API keys array from the response
-  // Assume similar structure to probe history: we'll want to check the actual response
-  const backendApiKeys = backendResponse && 
-    (Array.isArray(backendResponse) ? backendResponse : 
-    (backendResponse.keys ? backendResponse.keys : []));
+  // Safely extract the API keys array from the response with proper error handling
+  let backendApiKeys: BackendApiKey[] = [];
+  
+  try {
+    if (backendResponse) {
+      if (Array.isArray(backendResponse)) {
+        backendApiKeys = backendResponse;
+      } else if (backendResponse.keys && Array.isArray(backendResponse.keys)) {
+        backendApiKeys = backendResponse.keys;
+      } else if (typeof backendResponse === 'object') {
+        console.log("Response is an object but not in expected format:", backendResponse);
+      }
+    }
+  } catch (err) {
+    console.error("Error processing API keys response:", err);
+  }
   
   // Transform backend API keys to frontend format
   const apiKeys: ApiKey[] = (Array.isArray(backendApiKeys) ? backendApiKeys : []).map(key => ({

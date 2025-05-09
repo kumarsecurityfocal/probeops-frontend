@@ -46,9 +46,23 @@ export function ApiKeyTable({ apiKeys }: ApiKeyTableProps) {
   
   const deleteApiKeyMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `apikeys/${id}`);
+      try {
+        // Log the delete attempt
+        console.log(`Attempting to delete API key with ID: ${id}`);
+        
+        const response = await apiRequest("DELETE", `apikeys/${id}`);
+        // Log the response for debugging
+        console.log("Delete API key response:", response);
+        
+        return response.data;
+      } catch (error) {
+        console.error("Error deleting API key:", error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Successfully deleted API key:", data);
+      
       toast({
         title: "API key deleted",
         description: "The API key has been successfully deleted",
@@ -57,6 +71,8 @@ export function ApiKeyTable({ apiKeys }: ApiKeyTableProps) {
       setKeyToDelete(null);
     },
     onError: (error: Error) => {
+      console.error("API key deletion error in mutation:", error);
+      
       toast({
         title: "Failed to delete API key",
         description: error.message,
