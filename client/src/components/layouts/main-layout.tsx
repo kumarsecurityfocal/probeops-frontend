@@ -19,7 +19,8 @@ import {
   Bell, 
   User, 
   LogOut, 
-  Menu 
+  Menu,
+  Bug
 } from "lucide-react";
 
 interface MainLayoutProps {
@@ -60,6 +61,11 @@ export function MainLayout({ children }: MainLayoutProps) {
       name: "Settings",
       href: "/settings",
       icon: <Settings className="w-5 h-5" />,
+    },
+    {
+      name: "Debug",
+      href: "/debug",
+      icon: <Bug className="w-5 h-5" />,
     },
   ];
   

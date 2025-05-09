@@ -12,6 +12,7 @@ import ProbeToolsPage from "@/pages/probe-tools-page";
 import HistoryPage from "@/pages/history-page";
 import ApiKeysPage from "@/pages/api-keys-page";
 import SettingsPage from "@/pages/settings-page";
+import DebugPage from "@/pages/debug-page";
 
 function Router() {
   return (
@@ -21,6 +22,7 @@ function Router() {
       <ProtectedRoute path="/history" component={HistoryPage} />
       <ProtectedRoute path="/api-keys" component={ApiKeysPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
+      <Route path="/debug" component={DebugPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
