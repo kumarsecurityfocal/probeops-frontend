@@ -4,6 +4,9 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { randomBytes } from "crypto";
 import { probeTypes, probeStatus } from "@shared/schema";
+import { createProxyMiddleware, RequestHandler } from 'http-proxy-middleware';
+import { IncomingMessage, ServerResponse } from 'http';
+import { log } from './vite';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -247,10 +250,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
-  // PRODUCTION NOTE:
-  // The proxy routes to the AWS backend have been removed.
-  // The frontend now communicates directly with the backend API.
-  // Make sure to configure CORS on the backend to allow requests from your frontend domain.
+  // Setup proxy for development environment
+  if (process.env.NODE_ENV === 'development') {
+    log('Setting up API proxy for development mode', 'proxy');
+    
+    // Create a simple proxy middleware without type issues
+    try {
+      // Get the proxy target from environment variable or use default
+      const proxyTarget = process.env.PROXY_TARGET || 'http://probeops-api:5000';
+      log(`Using proxy target: ${proxyTarget}`, 'proxy');
+      
+      // @ts-ignore - Ignore TypeScript errors for the proxy middleware
+      const apiProxy = createProxyMiddleware({
+        target: proxyTarget,
+        changeOrigin: true,
+        pathRewrite: { '^/api': '' }  // Remove /api prefix when forwarding
+      });
+      
+      // Apply the proxy middleware to /api routes
+      app.use('/api', apiProxy);
+      log(`API proxy set up successfully. Requests to /api/* will be forwarded to ${proxyTarget}`, 'proxy');
+    } catch (error) {
+      log(`Failed to setup proxy: ${(error as Error).message}`, 'proxy');
+      
+      // Add a fallback route that returns a message about the proxy
+      app.use('/api/*', (req, res) => {
+        res.status(503).json({
+          message: 'Development proxy is not available. Please use production mode with direct API access.',
+          error: (error as Error).message
+        });
+      });
+    }
+  } else {
+    log('Production mode: API requests will go directly to the backend server', 'proxy');
+  }
 
   // Create and return the HTTP server
   const httpServer = createServer(app);

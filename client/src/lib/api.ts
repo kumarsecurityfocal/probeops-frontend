@@ -1,8 +1,20 @@
 import axios from 'axios';
 
-// In production, this should be the direct URL to the backend server
-// IMPORTANT: Make sure CORS is properly configured on the backend to allow requests from your frontend domain
-const API_URL = import.meta.env.VITE_API_URL || 'http://172.16.0.80:5000';
+// API URL Configuration:
+// - In development: Use relative '/api' URLs that will be handled by the development proxy
+// - In production: Use the full URL from VITE_API_URL environment variable (https://probeops.com)
+//
+// This setup allows us to:
+// 1. Use the same API endpoints code in both development and production
+// 2. Avoid CORS issues during development by using the proxy
+// 3. Have a clean separation between environments
+
+// Use relative URLs in development (will be handled by proxy) or full URL in production
+const API_URL = import.meta.env.PROD 
+  ? (import.meta.env.VITE_API_URL || 'https://probeops.com') 
+  : '/api';
+
+console.log(`API Configuration: ${import.meta.env.PROD ? 'Production' : 'Development'}`);
 console.log('Using API URL:', API_URL);
 
 // Create an axios instance with base configuration
@@ -64,7 +76,7 @@ api.interceptors.response.use(
 
 export default api;
 
-// Authentication API endpoints - direct to backend
+// Authentication API endpoints
 export const authAPI = {
   login: (credentials: { username: string; password: string }) => 
     api.post('/users/login', credentials),
@@ -79,7 +91,7 @@ export const authAPI = {
     api.post('/users/logout')
 };
 
-// API Keys endpoints - direct to backend
+// API Keys endpoints
 export const apiKeysAPI = {
   getAll: () => 
     api.get('/apikeys'),
@@ -91,7 +103,7 @@ export const apiKeysAPI = {
     api.delete(`/apikeys/${id}`)
 };
 
-// Probe endpoints - direct to backend
+// Probe endpoints
 export const probesAPI = {
   ping: (data: { host: string }) => 
     api.post('/probes/ping', data),
