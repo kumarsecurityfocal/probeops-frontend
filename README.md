@@ -90,12 +90,12 @@ A React frontend application for network diagnostics and monitoring that connect
    # and connected to the 'probeops-network' network
    ```
 
-4. The `docker-compose.frontend.yml` file is already configured to use the backend container:
+4. The `docker-compose.frontend.yml` file is already configured to use the backend public IP:
    ```yaml
-   # Environment variables for container communication
+   # Environment variables for browser-side API calls
    environment:
-     - VITE_API_URL=http://probeops-api:5000
-   # Network connecting to the backend container  
+     - VITE_API_URL=http://35.173.110.195:5000
+   # Network for container-to-container communication  
    networks:
      - probeops-network
    
@@ -106,7 +106,7 @@ A React frontend application for network diagnostics and monitoring that connect
        external: true  # This ensures we connect to the existing network
    ```
    
-   Note: The `external: true` flag is CRITICAL - it tells Docker to use the existing network where your backend is running.
+   Note: We use the public IP instead of the container name because the browser makes API calls directly, not from within the Docker network.
 
 5. Build and start the container with Docker Compose:
    ```bash
@@ -230,3 +230,4 @@ The backend API provides endpoints for:
 7. Added Docker network configuration for container-to-container communication
 8. Ensured API URL is correctly baked into the production build using Docker build arguments
 9. Created .env.production file with Docker-specific network settings
+10. Used public IP for API endpoint to allow browser-side API calls

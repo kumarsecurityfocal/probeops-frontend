@@ -16,8 +16,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Backend container hostname for Docker networking
-      - VITE_API_URL=http://probeops-api:5000
+      # Backend public IP for browser access
+      - VITE_API_URL=http://35.173.110.195:5000
       - PORT=3000
       # Ensure production build
       - NODE_ENV=production
