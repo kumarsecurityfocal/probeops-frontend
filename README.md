@@ -78,18 +78,26 @@ A React frontend application for network diagnostics and monitoring that connect
    cd probeops-frontend
    ```
 
-2. Edit the `docker-compose.frontend.yml` file to update the `VITE_API_URL` environment variable if needed:
-   ```yaml
-   environment:
-     - VITE_API_URL=http://your-backend-url:5000
+2. Make sure you have a Docker network created for communication between frontend and backend containers:
+   ```bash
+   # Create the shared network (if not already created by the backend container)
+   docker network create probeops-network
    ```
 
-3. Build and start the container with Docker Compose:
+3. The `docker-compose.frontend.yml` file is configured to use the backend container:
+   ```yaml
+   environment:
+     - VITE_API_URL=http://probeops-api:5000
+   ```
+   
+   Note: This assumes your backend container is named `probeops-api` and is connected to the same `probeops-network`. Adjust if needed.
+
+4. Build and start the container with Docker Compose:
    ```bash
    docker-compose -f docker-compose.frontend.yml up -d
    ```
 
-4. To stop the service:
+5. To stop the service:
    ```bash
    docker-compose -f docker-compose.frontend.yml down
    ```
@@ -202,3 +210,4 @@ The backend API provides endpoints for:
 4. Improved error handling and response mapping
 5. Added comprehensive environment configuration
 6. Fixed CommonJS module compatibility issues with serve-handler using proper ES Module imports
+7. Added Docker network configuration for container-to-container communication

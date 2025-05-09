@@ -16,10 +16,20 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Set this to your backend API URL
-      - VITE_API_URL=http://172.16.0.80:5000
+      # Set this to the backend container name for Docker networking
+      - VITE_API_URL=http://probeops-api:5000
       - PORT=3000
     restart: unless-stopped
     # Optional volume if you want to persist logs
     # volumes:
     #   - ./logs:/app/logs
+    networks:
+      - probeops-network
+
+# Define networks to allow communication with the backend
+networks:
+  probeops-network:
+    name: probeops-network
+    # Using external: true allows this compose file to connect to the existing network
+    # created by the backend docker-compose
+    external: true
