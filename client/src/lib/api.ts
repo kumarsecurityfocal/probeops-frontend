@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-// Use local server which proxies to AWS backend
-const API_URL = '';
+// In production, this should be the direct URL to the backend server
+// IMPORTANT: Make sure CORS is properly configured on the backend to allow requests from your frontend domain
+const API_URL = import.meta.env.VITE_API_URL || 'http://172.16.0.80:5000';
+console.log('Using API URL:', API_URL);
 
 // Create an axios instance with base configuration
 const api = axios.create({
@@ -62,47 +64,47 @@ api.interceptors.response.use(
 
 export default api;
 
-// Authentication API endpoints - via proxy to AWS backend
+// Authentication API endpoints - direct to backend
 export const authAPI = {
   login: (credentials: { username: string; password: string }) => 
-    api.post('/proxy/users/login', credentials),
+    api.post('/users/login', credentials),
     
   register: (userData: { username: string; email: string; password: string }) => 
-    api.post('/proxy/users/register', userData),
+    api.post('/users/register', userData),
     
   getUser: () => 
-    api.get('/proxy/users/me'),
+    api.get('/users/me'),
     
   logout: () => 
-    api.post('/proxy/users/logout')
+    api.post('/users/logout')
 };
 
-// API Keys endpoints - via proxy to AWS backend
+// API Keys endpoints - direct to backend
 export const apiKeysAPI = {
   getAll: () => 
-    api.get('/proxy/apikeys'),
+    api.get('/apikeys'),
     
   create: (data: { name: string; description?: string }) => 
-    api.post('/proxy/apikeys', data),
+    api.post('/apikeys', data),
     
   delete: (id: number) => 
-    api.delete(`/proxy/apikeys/${id}`)
+    api.delete(`/apikeys/${id}`)
 };
 
-// Probe endpoints - via proxy to AWS backend
+// Probe endpoints - direct to backend
 export const probesAPI = {
   ping: (data: { host: string }) => 
-    api.post('/proxy/probes/ping', data),
+    api.post('/probes/ping', data),
     
   traceroute: (data: { host: string }) => 
-    api.post('/proxy/probes/traceroute', data),
+    api.post('/probes/traceroute', data),
     
   dns: (data: { domain: string; recordType: string }) => 
-    api.post('/proxy/probes/dns', data),
+    api.post('/probes/dns', data),
     
   whois: (data: { domain: string }) => 
-    api.post('/proxy/probes/whois', data),
+    api.post('/probes/whois', data),
     
   getHistory: (limit?: number) => 
-    api.get('/proxy/probes/history', { params: limit ? { limit } : {} })
+    api.get('/probes/history', { params: limit ? { limit } : {} })
 };

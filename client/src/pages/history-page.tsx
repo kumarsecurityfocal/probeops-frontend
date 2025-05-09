@@ -29,9 +29,9 @@ interface BackendProbeResult {
 export default function HistoryPage() {
   const [selectedProbe, setSelectedProbe] = useState<ProbeResult | null>(null);
   
-  // Fetch all probe results from AWS backend via proxy
+  // Fetch all probe results directly from backend
   const { data: backendResponse, isLoading } = useQuery<any, Error>({
-    queryKey: ["/proxy/probes/history"]
+    queryKey: ["/probes/history"]
   });
   
   // Log the response for debugging

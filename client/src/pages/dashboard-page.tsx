@@ -9,14 +9,14 @@ import { ProbeStats, ProbeResult } from "@/lib/types";
 import { ArrowRight, Signal, CheckCircle, XCircle, Key } from "lucide-react";
 
 export default function DashboardPage() {
-  // Fetch stats data from proxy to AWS backend
+  // Fetch stats data directly from backend
   const { data: stats, isLoading: isLoadingStats } = useQuery<ProbeStats>({
-    queryKey: ["/api/stats"], // Using local endpoint backed by in-memory storage
+    queryKey: ["/stats"], // Direct backend endpoint
   });
   
-  // Fetch recent probes from proxy to AWS backend
+  // Fetch recent probes directly from backend
   const { data: recentProbes, isLoading: isLoadingProbes } = useQuery<ProbeResult[]>({
-    queryKey: ["/proxy/probes/history", { limit: 5 }],
+    queryKey: ["/probes/history", { limit: 5 }],
   });
   
   return (

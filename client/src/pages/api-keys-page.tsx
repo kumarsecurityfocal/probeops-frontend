@@ -22,9 +22,9 @@ interface BackendApiKey {
 export default function ApiKeysPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  // Fetch API keys from AWS backend via proxy
+  // Fetch API keys directly from backend
   const { data: backendResponse, isLoading } = useQuery<any, Error>({
-    queryKey: ["/proxy/apikeys"]
+    queryKey: ["/apikeys"]
   });
   
   // Log the response for debugging
