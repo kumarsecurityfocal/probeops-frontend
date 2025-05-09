@@ -90,7 +90,7 @@ A React frontend application for network diagnostics and monitoring that connect
    # and connected to the 'probeops-network' network
    ```
 
-4. The `docker-compose.frontend.yml` file is already configured to use the NGINX NPS server with HTTPS:
+4. The Docker Compose configuration file `docker-compose.frontend.yml` is already set up to use the NGINX NPS server with HTTPS:
    ```yaml
    # Environment variables for browser-side API calls
    environment:

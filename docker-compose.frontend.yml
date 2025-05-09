@@ -1,6 +1,6 @@
 # ProbeOps Frontend Docker Compose Configuration
 # This file is specifically for deploying the frontend component
-# To deploy: docker-compose -f docker-compose.frontend.yml up -d
+# To deploy: docker compose -f docker-compose.frontend.yml up -d
 
 version: '3.8'
 

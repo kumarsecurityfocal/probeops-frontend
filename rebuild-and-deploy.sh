@@ -17,8 +17,8 @@ npm run build
 
 # Step 4: Build and start Docker containers
 echo "🐳 Building and starting Docker containers..."
-docker-compose -f docker-compose.frontend.yml build --no-cache
-docker-compose -f docker-compose.frontend.yml up -d
+docker compose -f docker-compose.frontend.yml build --no-cache
+docker compose -f docker-compose.frontend.yml up -d
 
 echo "✨ Deployment completed!"
 echo "The application should now be running at http://localhost:3000"
