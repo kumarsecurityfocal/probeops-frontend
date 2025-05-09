@@ -33,11 +33,10 @@ export default function ApiKeysPage() {
   }
 
   // Extract the API keys array from the response
-  // AWS backend might return {data: [...]} or another structure
+  // Assume similar structure to probe history: we'll want to check the actual response
   const backendApiKeys = backendResponse && 
     (Array.isArray(backendResponse) ? backendResponse : 
-    (backendResponse.data ? backendResponse.data : 
-    (backendResponse.apikeys ? backendResponse.apikeys : [])));
+    (backendResponse.keys ? backendResponse.keys : []));
   
   // Transform backend API keys to frontend format
   const apiKeys: ApiKey[] = (Array.isArray(backendApiKeys) ? backendApiKeys : []).map(key => ({
