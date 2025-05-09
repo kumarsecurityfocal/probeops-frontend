@@ -14,8 +14,8 @@ COPY . .
 
 # Set production environment for the build
 ENV NODE_ENV=production
-# For browser access, we need the public IP, not the Docker container name
-ENV VITE_API_URL=http://35.173.110.195:5000
+# Using the domain with HTTPS instead of IP for improved security
+ENV VITE_API_URL=https://probeops.com/api
 
 # Build the application using production environment
 # This will ensure the correct API URL is baked into the build
@@ -38,8 +38,8 @@ WORKDIR /app
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
-# For browser access, we need the public IP, not the Docker container name
-ENV VITE_API_URL=http://35.173.110.195:5000
+# Using the domain with HTTPS instead of IP for improved security
+ENV VITE_API_URL=https://probeops.com/api
 
 # Install wget for health check and other utilities
 RUN apk --no-cache add wget curl
