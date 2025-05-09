@@ -56,12 +56,14 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
+  // IMPORTANT: For production, change this port to avoid conflicts with the backend
+  // In Replit development, we're using port 5000 as required by the Replit environment
+  // For production deployment, consider changing to another port (e.g., 3000)
+  // NOTE TO DEVOPS: This should be port 3000 or another port in production 
+  // to avoid conflict with the AWS backend running on port 5000
+  const port = process.env.PORT || 5000;
   server.listen({
-    port,
+    port: Number(port),
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
