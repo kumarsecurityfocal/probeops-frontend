@@ -33,31 +33,76 @@ A React frontend application for network diagnostics and monitoring that connect
 ### Prerequisites
 
 - Node.js 16+ and npm
-- A production web server (Nginx, Apache, etc.)
 - Backend API running at a known URL
 
-### Deployment Steps
+### Simple AWS Deployment
 
-1. Update `.env` file with production settings:
+1. Clone the repository and navigate to the project directory:
+   ```bash
+   git clone https://github.com/yourusername/probeops-frontend.git
+   cd probeops-frontend
    ```
-   # Frontend configuration
-   VITE_API_URL=http://172.16.0.80:5000  # Your backend URL
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Update `.env` file with production settings:
+   ```
+   # Frontend configuration - set this to your backend API URL
+   VITE_API_URL=http://172.16.0.80:5000
+   ```
+
+4. Run the production script (builds and starts the server):
+   ```bash
+   # Start with default port 3000
+   ./start-prod.sh
    
-   # Server configuration
-   PORT=3000  # Use a different port than the backend
+   # OR specify a custom port
+   ./start-prod.sh 4000
    ```
 
-2. Build the production bundle:
-   ```
-   npm run build
+This will:
+- Build the application
+- Start a production server on the specified port (default: 3000)
+- Configure the server to serve static files and handle client-side routing
+
+### Changing the Port
+
+You can change the port in two ways:
+
+1. Pass it as an argument to the start script:
+   ```bash
+   ./start-prod.sh 4000
    ```
 
-3. Start the production server:
-   ```
-   NODE_ENV=production npm start
+2. Set the PORT environment variable:
+   ```bash
+   PORT=4000 node server/prod-server.js
    ```
 
-4. (Optional) Set up a reverse proxy with Nginx or similar:
+### Running as a Background Service
+
+To keep the server running after you log out:
+
+```bash
+# Install PM2 globally
+npm install -g pm2
+
+# Start the service with PM2
+PORT=3000 pm2 start server/prod-server.js --name "probeops-frontend"
+
+# Make it start on server reboot
+pm2 startup
+pm2 save
+```
+
+### Advanced Deployment (Optional)
+
+For production environments with multiple services, consider using:
+
+1. A reverse proxy with Nginx:
    ```nginx
    server {
        listen 80;
