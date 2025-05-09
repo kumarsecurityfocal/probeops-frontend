@@ -51,8 +51,15 @@ interface ApiKeyResponse {
   };
   
   // Fields in case of an alternative api_key format
-  api_key?: string;
+  api_key?: string | {
+    key?: string;
+    value?: string;
+    [key: string]: any;
+  };
   message?: string;
+  
+  // Our custom extracted key string field from the mutation function
+  extractedApiKeyString?: string;
 }
 
 export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
@@ -74,8 +81,44 @@ export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
         const res = await apiRequest("POST", "apikeys", data);
         // Log the raw response to help with debugging
         console.log("Raw API key creation response:", res);
+        console.log("Response data content:", res.data);
         
-        // Axios responses contain data directly, no need to call .json()
+        // Extract API key from various possible response formats
+        let extractedApiKey = "";
+        const responseData = res.data;
+        
+        if (responseData && typeof responseData === 'object') {
+          // Case 1: Direct api_key field as string
+          if (responseData.api_key && typeof responseData.api_key === 'string') {
+            extractedApiKey = responseData.api_key;
+            console.log("Found API key as string in api_key field:", extractedApiKey);
+          } 
+          // Case 2: api_key field is an object with a key or value property
+          else if (responseData.api_key && typeof responseData.api_key === 'object') {
+            if (responseData.api_key.key && typeof responseData.api_key.key === 'string') {
+              extractedApiKey = responseData.api_key.key;
+              console.log("Found API key in api_key.key:", extractedApiKey);
+            } else if (responseData.api_key.value && typeof responseData.api_key.value === 'string') {
+              extractedApiKey = responseData.api_key.value;
+              console.log("Found API key in api_key.value:", extractedApiKey);
+            }
+          }
+          // Case 3: Direct key field as string
+          else if (responseData.key && typeof responseData.key === 'string') {
+            extractedApiKey = responseData.key;
+            console.log("Found API key as string in key field:", extractedApiKey);
+          }
+        }
+        
+        // If we extracted a valid API key, add it to the response
+        if (extractedApiKey) {
+          return {
+            ...res.data,
+            extractedApiKeyString: extractedApiKey
+          };
+        }
+        
+        // Otherwise return the original response
         return res.data;
       } catch (error) {
         console.error("API key creation error:", error);
@@ -85,31 +128,99 @@ export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
     onSuccess: (data: ApiKeyResponse) => {
       console.log("Successfully created API key:", data);
       
-      // Handle different possible response formats
-      let apiKey: ApiKey;
+      // Use the name from the form
       const formName = form.getValues().name || "New API Key";
       
       try {
-        if (data.apiKey && typeof data.apiKey === 'object') {
-          // Response with nested apiKey object
-          apiKey = {
-            id: data.apiKey.id,
-            userId: data.apiKey.user_id,
-            name: data.apiKey.name,
-            key: data.apiKey.key,
-            createdAt: new Date(data.apiKey.created_at)
+        // PRIORITY 1: Use our pre-extracted key string if available
+        if (data.extractedApiKeyString && typeof data.extractedApiKeyString === 'string') {
+          console.log("Using pre-extracted API key string:", data.extractedApiKeyString);
+          
+          // Create API key object with the extracted string
+          const apiKey: ApiKey = {
+            id: typeof data.id === 'number' ? data.id : 0,
+            userId: typeof data.user_id === 'number' ? data.user_id : 0,
+            name: formName,
+            key: data.extractedApiKeyString,
+            createdAt: new Date()
           };
-        } else if (data.api_key && typeof data.api_key === 'string') {
-          // Response with api_key string format (e.g. from register response)
+          
+          // Show success notification
+          toast({
+            title: "API Key Created",
+            description: `Your new API key "${apiKey.name}" has been created successfully`,
+            variant: "default",
+          });
+          
+          // Update state and invalidate queries
+          setNewApiKey(apiKey);
+          queryClient.invalidateQueries({ queryKey: ["apikeys"] });
+          return;
+        }
+        
+        // PRIORITY 2: Try standard response formats
+        let apiKey: ApiKey | null = null;
+        
+        // Try to extract from apiKey object
+        if (!apiKey && data.apiKey && typeof data.apiKey === 'object') {
+          console.log("Extracting from apiKey object");
+          const apiKeyObj = data.apiKey as {
+            id: number;
+            user_id: number;
+            name: string;
+            key: string;
+            created_at: string;
+          };
           apiKey = {
-            id: 0, // Will be refreshed on next list fetch
-            userId: 0, // Will be refreshed on next list fetch
+            id: apiKeyObj.id,
+            userId: apiKeyObj.user_id,
+            name: apiKeyObj.name,
+            key: apiKeyObj.key,
+            createdAt: new Date(apiKeyObj.created_at)
+          };
+        }
+        
+        // Try to extract from api_key string
+        if (!apiKey && data.api_key && typeof data.api_key === 'string') {
+          console.log("Extracting from api_key string");
+          apiKey = {
+            id: 0,
+            userId: 0,
             name: formName,
             key: data.api_key,
             createdAt: new Date()
           };
-        } else if (data.key && typeof data.key === 'string') {
-          // Flat response structure with direct fields
+        }
+        
+        // Try to extract from api_key object
+        if (!apiKey && data.api_key && typeof data.api_key === 'object') {
+          console.log("Extracting from api_key object");
+          
+          // Safely access potential key or value properties
+          const apiKeyObj = data.api_key as {
+            key?: string;
+            value?: string;
+            [key: string]: any;
+          };
+          
+          const keyString = 
+            (typeof apiKeyObj.key === 'string' ? apiKeyObj.key : null) || 
+            (typeof apiKeyObj.value === 'string' ? apiKeyObj.value : null);
+            
+          if (keyString) {
+            apiKey = {
+              id: 0,
+              userId: 0,
+              name: formName,
+              key: keyString,
+              createdAt: new Date()
+            };
+          }
+        }
+        
+        // Try to extract from direct key field
+        if (!apiKey && data.key && typeof data.key === 'string') {
+          console.log("Extracting from direct key field");
           apiKey = {
             id: typeof data.id === 'number' ? data.id : 0,
             userId: typeof data.user_id === 'number' ? data.user_id : 0,
@@ -117,35 +228,12 @@ export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
             key: data.key,
             createdAt: typeof data.created_at === 'string' ? new Date(data.created_at) : new Date()
           };
-        } else {
-          // If we get here, we have an unexpected response format
-          // Create a fallback with just the form name and a placeholder for the key
-          console.warn("Using fallback API key handling for unexpected response format:", data);
-          
-          let keyFromResponse = "";
-          
-          // Try to extract key from various possible locations
-          if (typeof data === 'object') {
-            if (typeof data.api_key === 'string') keyFromResponse = data.api_key;
-            else if (typeof data.key === 'string') keyFromResponse = data.key;
-            else if (data.apiKey && typeof data.apiKey.key === 'string') keyFromResponse = data.apiKey.key;
-            // Try to handle case where the entire response might be the key string
-            else if (typeof data.toString === 'function' && data.toString().length > 10) {
-              keyFromResponse = data.toString();
-            }
-          }
-          
-          if (!keyFromResponse) {
-            throw new Error("Could not extract API key from server response");
-          }
-          
-          apiKey = {
-            id: 0,
-            userId: 0,
-            name: formName,
-            key: keyFromResponse,
-            createdAt: new Date()
-          };
+        }
+        
+        // If we still don't have an API key, report an error
+        if (!apiKey) {
+          console.error("Could not extract API key from response:", data);
+          throw new Error("Could not extract API key from server response");
         }
         
         // Show success toast notification
