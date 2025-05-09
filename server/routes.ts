@@ -4,10 +4,8 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { randomBytes } from "crypto";
 import { probeTypes, probeStatus } from "@shared/schema";
-import { createProxyMiddleware, RequestHandler } from 'http-proxy-middleware';
-import { IncomingMessage, ServerResponse } from 'http';
 import { log } from './vite';
-import { initProxyLog, logProxyRequest, logProxyError, getRecentProxyLogs } from './proxy-logger';
+import { initProxyLog, getRecentProxyLogs } from './proxy-logger';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize proxy logs if in development mode
@@ -295,59 +293,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Setup proxy for development environment
-  if (process.env.NODE_ENV === 'development') {
-    log('Setting up API proxy for development mode', 'proxy');
-    
-    // Create a simple proxy middleware without type issues
-    try {
-      // Get the proxy target from environment variable or use default
-      const proxyTarget = process.env.PROXY_TARGET || 'http://probeops-api:5000';
-      log(`Using proxy target: ${proxyTarget}`, 'proxy');
-      
-      // @ts-ignore - Ignore TypeScript errors for the proxy middleware
-      const apiProxy = createProxyMiddleware({
-        target: proxyTarget,
-        changeOrigin: true,
-        pathRewrite: { '^/api': '' },  // Remove /api prefix when forwarding
-        onProxyReq: async (proxyReq: any, req: any) => {
-          // Log the proxy request
-          const method = req.method;
-          const path = req.url;
-          await logProxyRequest(method, path, proxyTarget);
-          log(`Proxying ${method} ${path} -> ${proxyTarget}`, 'proxy');
-        },
-        onError: async (err: any, req: any, res: any) => {
-          // Log proxy errors
-          await logProxyError(`Proxy error for ${req.method} ${req.url}`, err);
-          
-          if (!res.headersSent) {
-            res.status(500).json({ 
-              message: 'Proxy error', 
-              error: err.message,
-              target: proxyTarget
-            });
-          }
-        }
-      });
-      
-      // Apply the proxy middleware to /api routes
-      app.use('/api', apiProxy);
-      log(`API proxy set up successfully. Requests to /api/* will be forwarded to ${proxyTarget}`, 'proxy');
-    } catch (error) {
-      log(`Failed to setup proxy: ${(error as Error).message}`, 'proxy');
-      
-      // Add a fallback route that returns a message about the proxy
-      app.use('/api/*', (req, res) => {
-        res.status(503).json({
-          message: 'Development proxy is not available. Please use production mode with direct API access.',
-          error: (error as Error).message
-        });
-      });
-    }
-  } else {
-    log('Production mode: API requests will go directly to the backend server', 'proxy');
-  }
+  // PROXY REMOVED: We're now using NGINX Proxy Manager on a separate server
+  log('Development mode: API proxy has been removed. Update your API configuration in client/src/lib/api.ts', 'proxy');
 
   // Create and return the HTTP server
   const httpServer = createServer(app);
