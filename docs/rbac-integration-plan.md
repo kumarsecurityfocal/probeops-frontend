@@ -1,141 +1,127 @@
 # ProbeOps RBAC Integration Plan
 
 ## Overview
-This document outlines the plan for integrating the Role-Based Access Control (RBAC) module developed by the probeops-backend team into the ProbeOps GUI.
 
-## Backend RBAC Implementation Details
+This document outlines the implementation strategy for Role-Based Access Control (RBAC) in the ProbeOps frontend application. The RBAC system is designed to control access to features and functionality based on user roles and subscription tiers.
 
-### Authentication Methods
+## Authentication Methods
 
-1. **JWT Token Authentication**
-   - Endpoint: `/api/auth/login`
-   - Header: `Authorization: Bearer {token}`
-   - Contains: user role + subscription tier
-   - Expiration: 24 hours
+The ProbeOps system supports two main authentication methods:
+
+1. **JWT Authentication**
+   - Used for interactive user sessions in the web interface
+   - Token contains user role and subscription tier information
+   - 24-hour expiration period
+   - Requires Authorization header with "Bearer" prefix
 
 2. **API Key Authentication**
-   - Header: `X-API-Key: {api_key}`
-   - Created via: `/api/keys` endpoint
-   - Inherits creator's permissions
+   - Used for programmatic access to the API
+   - Inherits the permissions of the creating user
+   - Requires X-API-KEY header
+   - No expiration (until revoked)
 
-### User Roles
+## User Roles
 
-1. **User Role** (`user`)
-   - Default role for registered users
-   - Access to standard probe endpoints
-   - Manage own API keys
-   - Rate-limited by subscription tier
+ProbeOps defines two primary user roles:
 
-2. **Admin Role** (`admin`)
-   - Manage all users and API keys
-   - Configure rate limits
-   - Access system status
-   - No rate limits
+| Role | Description | Access Level |
+|------|-------------|--------------|
+| User | Standard user with access to basic functionality | Limited to own resources |
+| Admin | Administrator with full system access | Full system access |
 
-### Subscription Tiers
+### Role Permissions
 
-1. **Free Tier**
-   - 100 requests/day, 1,000/month
-   - 15-minute interval between probes
+#### User Role
+- Create and manage their own API keys
+- Run network probes with rate limits based on subscription
+- View their probe history
+- Manage their account settings
 
-2. **Standard Tier**
-   - 500 requests/day, 5,000/month
-   - 5-minute interval between probes
+#### Admin Role
+- All User role permissions
+- Access to administrative functions
+- Manage all users and their API keys
+- View system-wide probe history
+- Access debug information
 
-3. **Enterprise Tier**
-   - 1,000 requests/day, 10,000/month
-   - 5-minute interval between probes
+## Subscription Tiers
 
-## Frontend Implementation Plan
+ProbeOps implements three subscription tiers that control resource usage:
 
-### 1. User Interface Components
+| Tier | Daily Request Limit | Monthly Request Limit | Probe Interval | 
+|------|---------------------|----------------------|----------------|
+| Free | 100 | 1,000 | 15 min |
+| Standard | 500 | 5,000 | 5 min |
+| Enterprise | 1,000 | 10,000 | 5 min |
 
-- **User Settings Page Enhancements**
-  - Display current subscription tier
-  - Upgrade/downgrade subscription options
-  - Role indicator for users
+## Frontend RBAC Implementation
 
-- **Admin Panel Components** (admin role only)
-  - User management table
-  - API key management across all users
-  - System status dashboard
-  - Rate limit configuration
+### 1. Schema Implementation
 
-- **Rate Limit Displays**
-  - Visual indicators for daily/monthly usage
-  - Warnings when approaching limits
-  - Upgrade prompts for users near limits
+The shared schema defines enums and types for:
+- User roles (USER, ADMIN)
+- Subscription tiers (FREE, STANDARD, ENTERPRISE)
+- Rate limit information structure
 
-### 2. Authentication & Access Control Implementation
+### 2. Authentication Context
 
-- **Enhanced Authentication Flow**
-  - Store JWT token with role and subscription information
-  - Handle 401 (Unauthorized) errors with automatic logout
-  - Handle 403 (Forbidden) for role-based access violations
-  - Handle 429 (Too Many Requests) for rate limit errors
+The authentication context is enhanced to:
+- Store user role information from JWT
+- Store subscription tier information
+- Provide helper methods for role checking
 
-- **React Hooks for Authorization**
-  - `useRole` - Check if user has specific role
-  - `useSubscription` - Access subscription tier information
-  - `useRateLimits` - Get current usage and limits
+### 3. RBAC Provider
 
-- **Route Protection**
-  - Admin routes restricted to admin role
-  - Conditional rendering of UI elements based on role
-  - Graceful error handling for unauthorized access attempts
+A dedicated RBAC provider:
+- Exposes role and subscription information
+- Provides utilities for role-based permission checks
+- Manages rate limit data from the backend
 
-### 3. API Integration
+### 4. Protected Routes
 
-- **Update API Client**
-  - Include authentication headers in all requests
-  - Handle role-specific error responses
-  - Track rate limit information from response headers
+Route protection components:
+- Enforce authentication requirements
+- Check role-based permissions
+- Redirect unauthorized access attempts
 
-- **JWT Token Management**
-  - Extract and store role information
-  - Update auth context to include role and subscription information
-  - Handle token expiration and refresh
+### 5. UI Components for RBAC
 
-### 4. User Experience Enhancements
+User interface elements include:
+- Role badges to indicate user roles
+- Subscription tier indicators
+- Rate limit displays with usage statistics
+- Upgrade prompts for approaching limits
 
-- **Clear Role Indicators**
-  - Admin badge in navigation
-  - Role-specific UI elements
+## Rate Limiting Behavior
 
-- **Subscription Information**
-  - Tier status in dashboard
-  - Usage statistics
-  - Upgrade path prominently displayed
+Rate limits are enforced by the backend based on subscription tier:
 
-- **Error Handling**
-  - User-friendly messages for authentication errors
-  - Clear indications when rate limits are reached
-  - Helpful guidance when access is denied due to role restrictions
+1. Daily and monthly request quotas
+2. Minimum intervals between consecutive probes
+3. Visual indicators when approaching limits
+4. Upgrade prompts when nearing capacity
 
-## Implementation Phases
+## Implementation Roadmap
 
-### Phase 1: Authentication Enhancement
-1. Update auth context to extract role and subscription from JWT
-2. Implement proper storage and retrieval of this information
-3. Create hooks for checking roles and subscription tiers
+1. Define schema types for roles and permissions
+2. Enhance authentication context with role information
+3. Create RBAC provider for permission management
+4. Implement protected routes with role checks
+5. Add role and subscription UI components
+6. Integrate rate limit displays and upgrade flows
+7. Apply role-based conditional rendering throughout the application
 
-### Phase 2: Role-Based UI Components
-1. Add role checks to existing routes and components
-2. Create admin-only sections in the UI
-3. Implement role indicators in the navigation
+## API Endpoints
 
-### Phase 3: Subscription & Rate Limit Features
-1. Add subscription tier display to user dashboard
-2. Implement usage tracking and visualization
-3. Add rate limit warnings and notifications
+The following endpoints are relevant to RBAC implementation:
 
-### Phase 4: Admin Panel
-1. Create user management interface for admins
-2. Implement system status dashboard
-3. Add configuration options for rate limits
+- `/api/user` - Get current user information with role and subscription data
+- `/api/user/rate-limits` - Get current usage and limits information
+- `/api/user/subscription` - Update user subscription tier
 
-## Test Plan
-1. Authentication flow with different roles
-2. UI component visibility based on roles
-3. Rate limit enforcement and warnings
-4. Admin functionality access and controls
+## Testing Strategy
+
+1. Mock different user roles and subscription tiers
+2. Verify correct access control behavior
+3. Test rate limit visualizations with different usage levels
+4. Ensure subscription tier changes update permissions correctly
