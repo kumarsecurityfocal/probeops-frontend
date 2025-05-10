@@ -90,3 +90,32 @@ export type PingProbeParams = z.infer<typeof pingProbeSchema>;
 export type TracerouteProbeParams = z.infer<typeof tracerouteProbeSchema>;
 export type DnsProbeParams = z.infer<typeof dnsProbeSchema>;
 export type WhoisProbeParams = z.infer<typeof whoisProbeSchema>;
+
+// RBAC Types
+// Note: These are placeholders and should be updated based on information from probeops-backend team
+
+export const roleSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  description: z.string().optional(),
+  created_at: z.string(),
+  updated_at: z.string().optional()
+});
+
+export const permissionSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  description: z.string().optional(),
+  resource: z.string(),
+  action: z.string()
+});
+
+export const userRoleSchema = z.object({
+  user_id: z.number(),
+  role_id: z.number(),
+  assigned_at: z.string()
+});
+
+export type Role = z.infer<typeof roleSchema>;
+export type Permission = z.infer<typeof permissionSchema>;
+export type UserRole = z.infer<typeof userRoleSchema>;
