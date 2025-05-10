@@ -89,19 +89,22 @@ export default function ApiKeysPage() {
     <MainLayout>
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">API Keys</h1>
-              <p className="mt-1 text-sm text-gray-500">Manage your API keys for external applications</p>
+              <h1 className="text-3xl font-bold mb-2">API <span className="text-gradient-primary">Keys</span></h1>
+              <p className="text-muted-foreground">Securely manage authentication tokens for external applications</p>
             </div>
             <div className="flex gap-2">
               {isFetching && !isLoading && (
-                <Button variant="outline" disabled>
+                <Button variant="outline" disabled className="bg-background/80 backdrop-blur-sm border-border/50">
                   <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                   Refreshing...
                 </Button>
               )}
-              <Button onClick={() => setIsDialogOpen(true)} className="flex items-center">
+              <Button 
+                onClick={() => setIsDialogOpen(true)} 
+                className="flex items-center shadow-sm bg-gradient-primary text-white hover:shadow-md transition-shadow"
+              >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Create New Key
               </Button>
@@ -113,30 +116,51 @@ export default function ApiKeysPage() {
             <Card>
               {isLoading ? (
                 <CardContent className="p-6">
-                  <div className="space-y-4">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="flex items-center gap-4">
-                        <Skeleton className="h-6 w-40" />
-                        <Skeleton className="h-6 w-32" />
-                        <Skeleton className="h-6 w-32" />
-                        <Skeleton className="h-6 w-20" />
+                  <div>
+                    {/* Table header skeleton */}
+                    <div className="border-b border-border/50 pb-4 mb-4">
+                      <div className="flex items-center gap-4">
+                        <Skeleton className="h-5 w-20" />
+                        <Skeleton className="h-5 w-24 ml-8" />
+                        <Skeleton className="h-5 w-24 ml-8" />
+                        <Skeleton className="h-5 w-16 ml-auto" />
                       </div>
-                    ))}
+                    </div>
+                    
+                    {/* Table rows skeleton */}
+                    <div className="space-y-6">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="flex items-center gap-6 py-2 group animate-pulse">
+                          <div className="flex flex-col space-y-2">
+                            <Skeleton className="h-6 w-36" />
+                            <Skeleton className="h-4 w-24 bg-muted/50" />
+                          </div>
+                          <Skeleton className="h-6 w-52 ml-8" />
+                          <Skeleton className="h-6 w-24 ml-4" />
+                          <Skeleton className="h-8 w-20 ml-auto rounded-md" />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </CardContent>
               ) : isError ? (
-                <CardContent className="p-6">
-                  <div className="text-center py-8 space-y-4">
-                    <div className="mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-red-100">
-                      <AlertTriangle className="h-8 w-8 text-red-600" />
+                <CardContent className="p-8">
+                  <div className="text-center py-10 space-y-6">
+                    <div className="mx-auto w-20 h-20 flex items-center justify-center rounded-full bg-destructive/10 border border-destructive/20">
+                      <AlertTriangle className="h-10 w-10 text-destructive" />
                     </div>
-                    <h3 className="text-lg font-medium">Failed to load API keys</h3>
-                    <p className="text-muted-foreground max-w-md mx-auto">
-                      {error?.message || "There was an error connecting to the server. Please try again."}
-                    </p>
-                    <Button onClick={handleRetry} variant="outline" className="mt-2">
+                    <div>
+                      <h3 className="text-xl font-bold mb-2">Connection Error</h3>
+                      <p className="text-muted-foreground max-w-md mx-auto">
+                        {error?.message || "Unable to load your API keys. This could be due to network issues or server maintenance."}
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={handleRetry} 
+                      className="mt-4 bg-gradient-primary hover:shadow-md transition-shadow"
+                    >
                       <RefreshCw className="mr-2 h-4 w-4" />
-                      Retry
+                      Try Again
                     </Button>
                   </div>
                 </CardContent>

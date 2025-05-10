@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2, Info } from "lucide-react";
+import { Trash2, Info, Key } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ApiKeyTableProps {
@@ -111,8 +111,14 @@ export function ApiKeyTable({ apiKeys }: ApiKeyTableProps) {
   
   if (!apiKeys.length) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">No API keys found</p>
+      <div className="text-center py-16 px-4">
+        <div className="mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-primary/10 mb-4">
+          <Key className="h-8 w-8 text-primary/70" />
+        </div>
+        <h3 className="text-lg font-semibold mb-2">No API Keys Found</h3>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Create your first API key to start making requests to the ProbeOps API from your applications.
+        </p>
       </div>
     );
   }
@@ -135,44 +141,42 @@ export function ApiKeyTable({ apiKeys }: ApiKeyTableProps) {
       <div className="w-full overflow-auto">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Key Preview</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+            <TableRow className="border-b border-border/50 bg-muted/30">
+              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name</TableHead>
+              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Created</TableHead>
+              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Key Preview</TableHead>
+              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {apiKeys.map((apiKey) => (
-              <TableRow key={apiKey.id}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-1">
-                    {apiKey.name}
+              <TableRow 
+                key={apiKey.id}
+                className="border-b border-border/20 hover:bg-muted/30 transition-colors"
+              >
+                <TableCell className="py-4">
+                  <div className="flex flex-col">
+                    <span className="text-base font-medium">{apiKey.name}</span>
                     {apiKey.description && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span>
-                              <Info className="h-4 w-4 text-gray-400" />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{apiKey.description}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <span className="text-sm text-muted-foreground mt-1">{apiKey.description}</span>
                     )}
                   </div>
                 </TableCell>
-                <TableCell>{format(new Date(apiKey.createdAt), "yyyy-MM-dd")}</TableCell>
-                <TableCell className="font-mono">{formatApiKey(apiKey.key)}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {format(new Date(apiKey.createdAt), "MMM d, yyyy")}
+                </TableCell>
+                <TableCell>
+                  <code className="font-mono text-xs px-2 py-1 bg-secondary/10 rounded text-secondary">{formatApiKey(apiKey.key)}</code>
+                </TableCell>
                 <TableCell className="text-right">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={() => handleDelete(apiKey)}
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20"
                   >
-                    <Trash2 className="h-4 w-4 text-red-500" />
+                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                    Delete
                   </Button>
                 </TableCell>
               </TableRow>
@@ -182,17 +186,29 @@ export function ApiKeyTable({ apiKeys }: ApiKeyTableProps) {
       </div>
       
       <AlertDialog open={!!keyToDelete} onOpenChange={(open) => !open && setKeyToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border-destructive/20">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the API key "{keyToDelete?.name}". 
-              This action cannot be undone and may break applications using this key.
+            <div className="mx-auto mb-4 w-12 h-12 flex items-center justify-center rounded-full bg-destructive/10">
+              <Trash2 className="h-6 w-6 text-destructive" />
+            </div>
+            <AlertDialogTitle className="text-xl text-center">Delete API Key</AlertDialogTitle>
+            <AlertDialogDescription className="text-center pt-2">
+              <p className="text-base mb-2 text-foreground font-medium">"{keyToDelete?.name}"</p>
+              <p className="text-muted-foreground">
+                This action cannot be undone. Applications using this key will lose access to the ProbeOps API.
+              </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+          <AlertDialogFooter className="mt-6 gap-2">
+            <AlertDialogCancel className="border-border/50 font-medium">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              className="bg-destructive hover:bg-destructive/90 gap-2"
+              disabled={deleteApiKeyMutation.isPending}
+            >
+              {deleteApiKeyMutation.isPending && (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+              )}
               {deleteApiKeyMutation.isPending ? "Deleting..." : "Delete API Key"}
             </AlertDialogAction>
           </AlertDialogFooter>
