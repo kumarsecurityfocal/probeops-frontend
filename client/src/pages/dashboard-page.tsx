@@ -2,13 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { ProbeResultsTable } from "@/components/probe/probe-results-table";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProbeStats, ProbeResult } from "@/lib/types";
-import { Activity, ArrowRight, Signal, CheckCircle, XCircle, Key } from "lucide-react";
+import { Activity, ArrowRight, Signal, CheckCircle, XCircle, Key, ArrowUpCircle } from "lucide-react";
+import { RateLimitDisplay } from "@/components/subscription/rate-limit-display";
+import { useSubscription } from "@/hooks/use-rbac";
 
 export default function DashboardPage() {
+  // Get subscription information
+  const { subscriptionTier } = useSubscription();
+  
   // Fetch stats data directly from backend
   const { data: stats, isLoading: isLoadingStats } = useQuery<ProbeStats>({
     queryKey: ["/stats"], // Direct backend endpoint
@@ -18,6 +23,12 @@ export default function DashboardPage() {
   const { data: recentProbes, isLoading: isLoadingProbes } = useQuery<ProbeResult[]>({
     queryKey: ["/probes/history", { limit: 5 }],
   });
+  
+  // Handle upgrade subscription button click
+  const handleUpgradeClick = () => {
+    // Navigate to settings page
+    window.location.href = '/settings';
+  };
   
   return (
     <MainLayout>
@@ -117,40 +128,73 @@ export default function DashboardPage() {
               </Card>
             </div>
             
-            {/* Recent Probe Results */}
-            <div className="mt-10">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-xl font-bold flex items-center">
-                  <Activity className="h-5 w-5 mr-2 text-primary" />
-                  Recent Probe Results
-                </h2>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/history" className="text-primary hover:text-primary/80 flex items-center">
-                    View all history
-                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                  </Link>
-                </Button>
+            {/* Usage and Subscription */}
+            <div className="mt-10 grid gap-6 md:grid-cols-3">
+              <div className="md:col-span-2">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-xl font-bold flex items-center">
+                    <Activity className="h-5 w-5 mr-2 text-primary" />
+                    Recent Probe Results
+                  </h2>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/history" className="text-primary hover:text-primary/80 flex items-center">
+                      View all history
+                      <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                </div>
+                
+                <Card className="border border-border/40 shadow-sm h-full">
+                  {isLoadingProbes ? (
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <div key={i} className="flex items-center gap-4">
+                            <Skeleton className="h-6 w-32" />
+                            <Skeleton className="h-6 w-20" />
+                            <Skeleton className="h-6 w-28" />
+                            <Skeleton className="h-6 w-20" />
+                            <Skeleton className="h-6 w-full" />
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  ) : (
+                    <ProbeResultsTable results={recentProbes || []} />
+                  )}
+                </Card>
               </div>
               
-              <Card className="border border-border/40 shadow-sm">
-                {isLoadingProbes ? (
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="flex items-center gap-4">
-                          <Skeleton className="h-6 w-32" />
-                          <Skeleton className="h-6 w-20" />
-                          <Skeleton className="h-6 w-28" />
-                          <Skeleton className="h-6 w-20" />
-                          <Skeleton className="h-6 w-full" />
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                ) : (
-                  <ProbeResultsTable results={recentProbes || []} />
-                )}
-              </Card>
+              {/* Usage Limits Section */}
+              <div>
+                <h2 className="text-xl font-bold mb-5 flex items-center">
+                  <ArrowUpCircle className="h-5 w-5 mr-2 text-primary" />
+                  Usage Limits
+                </h2>
+                
+                <RateLimitDisplay onUpgradeClick={handleUpgradeClick} />
+                
+                <div className="mt-6">
+                  <Card className="border border-border/40 shadow-sm">
+                    <CardHeader className="pb-2">
+                      <h3 className="text-sm font-medium">Need More Requests?</h3>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Upgrade your plan to get more requests per day and faster probe intervals.
+                      </p>
+                      <Button 
+                        onClick={handleUpgradeClick}
+                        className="w-full mt-4 bg-gradient-to-r from-primary to-primary/80 text-white"
+                        size="sm"
+                      >
+                        <ArrowUpCircle className="mr-2 h-4 w-4" />
+                        Upgrade Subscription
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             </div>
           </div>
         </div>

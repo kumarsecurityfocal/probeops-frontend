@@ -23,7 +23,7 @@ function Router() {
       <ProtectedRoute path="/history" component={HistoryPage} />
       <ProtectedRoute path="/api-keys" component={ApiKeysPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
-      <Route path="/debug" component={DebugPage} />
+      <AdminRoute path="/debug" component={DebugPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

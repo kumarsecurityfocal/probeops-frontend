@@ -86,7 +86,7 @@ export function RbacProvider({ children }: { children: ReactNode }) {
         role,
         isAdmin,
         subscriptionTier,
-        rateLimit,
+        rateLimit: rateLimit || null,
         isLoadingRateLimit,
         rateLimitError,
         hasRole,

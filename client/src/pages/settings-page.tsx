@@ -4,6 +4,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RoleBadge } from "@/components/rbac/role-badge";
+import { SubscriptionTierBadge } from "@/components/subscription/subscription-tier-badge";
+import { RateLimitDisplay } from "@/components/subscription/rate-limit-display";
+import { UpgradeSubscription } from "@/components/subscription/upgrade-subscription";
+import { useSubscription } from "@/hooks/use-rbac";
 
 export default function SettingsPage() {
   const { user, logoutMutation } = useAuth();
