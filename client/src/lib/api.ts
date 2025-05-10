@@ -80,7 +80,7 @@ export default api;
 
 // Authentication API endpoints
 export const authAPI = {
-  login: (credentials: { username: string; password: string }) => 
+  login: (credentials: { email: string; password: string }) => 
     api.post('/users/login', credentials),
     
   register: (userData: { username: string; email: string; password: string }) => 

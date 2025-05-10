@@ -23,7 +23,7 @@ const registerSchema = z.object({
 
 // Login schema
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
+  email: z.string().min(1, "Email is required").email("Must be a valid email"),
   password: z.string().min(1, "Password is required"),
   rememberMe: z.boolean().optional(),
 });
@@ -40,7 +40,7 @@ export function AuthForm() {
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
       rememberMe: false,
     },
@@ -61,7 +61,7 @@ export function AuthForm() {
   const onLoginSubmit = (data: LoginFormValues) => {
     console.log("Login submit:", data);
     loginMutation.mutate({
-      username: data.username,
+      email: data.email,
       password: data.password,
     });
   };
@@ -93,16 +93,16 @@ export function AuthForm() {
           {isLogin ? (
             <form onSubmit={loginForm.handleSubmit(onLoginSubmit)}>
               <div className="mb-4">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="email">Email Address</Label>
                 <Input
-                  id="username"
-                  type="text"
-                  placeholder="username"
-                  {...loginForm.register("username")}
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  {...loginForm.register("email")}
                 />
-                {loginForm.formState.errors.username && (
+                {loginForm.formState.errors.email && (
                   <p className="mt-1 text-sm text-red-600">
-                    {loginForm.formState.errors.username.message}
+                    {loginForm.formState.errors.email.message}
                   </p>
                 )}
               </div>

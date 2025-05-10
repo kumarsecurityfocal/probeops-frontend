@@ -34,7 +34,7 @@ interface BackendUser {
 
 // Interface for login request data
 interface LoginRequest {
-  username: string;
+  email: string;
   password: string;
 }
 
