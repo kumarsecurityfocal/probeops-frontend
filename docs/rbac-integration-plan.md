@@ -3,112 +3,139 @@
 ## Overview
 This document outlines the plan for integrating the Role-Based Access Control (RBAC) module developed by the probeops-backend team into the ProbeOps GUI.
 
-## Information Required from Backend Team
+## Backend RBAC Implementation Details
 
-### API Endpoints
-- **Role Management Endpoints**
-  - GET `/api/roles` - List all available roles
-  - GET `/api/roles/:id` - Get role details
-  - POST `/api/roles` - Create a new role
-  - PUT `/api/roles/:id` - Update role
-  - DELETE `/api/roles/:id` - Delete role
+### Authentication Methods
 
-- **User Role Assignment Endpoints**
-  - GET `/api/users/:id/roles` - Get roles assigned to a user
-  - POST `/api/users/:id/roles` - Assign role to a user
-  - DELETE `/api/users/:id/roles/:roleId` - Remove role from a user
+1. **JWT Token Authentication**
+   - Endpoint: `/api/auth/login`
+   - Header: `Authorization: Bearer {token}`
+   - Contains: user role + subscription tier
+   - Expiration: 24 hours
 
-- **Permission Endpoints**
-  - GET `/api/permissions` - List all available permissions
-  - GET `/api/roles/:id/permissions` - Get permissions for a role
+2. **API Key Authentication**
+   - Header: `X-API-Key: {api_key}`
+   - Created via: `/api/keys` endpoint
+   - Inherits creator's permissions
 
-### Data Models
-- **Role Model**
-  ```typescript
-  interface Role {
-    id: number;
-    name: string;
-    description: string;
-    created_at: string;
-    updated_at: string;
-  }
-  ```
+### User Roles
 
-- **Permission Model**
-  ```typescript
-  interface Permission {
-    id: number;
-    name: string;
-    description: string;
-    resource: string;
-    action: string;
-  }
-  ```
+1. **User Role** (`user`)
+   - Default role for registered users
+   - Access to standard probe endpoints
+   - Manage own API keys
+   - Rate-limited by subscription tier
 
-- **User Role Model**
-  ```typescript
-  interface UserRole {
-    user_id: number;
-    role_id: number;
-    assigned_at: string;
-  }
-  ```
+2. **Admin Role** (`admin`)
+   - Manage all users and API keys
+   - Configure rate limits
+   - Access system status
+   - No rate limits
 
-### Authentication Requirements
-- Does the existing JWT token include role information?
-- How should role-based permissions be checked on the frontend?
-- Do we need to update authentication flow?
+### Subscription Tiers
+
+1. **Free Tier**
+   - 100 requests/day, 1,000/month
+   - 15-minute interval between probes
+
+2. **Standard Tier**
+   - 500 requests/day, 5,000/month
+   - 5-minute interval between probes
+
+3. **Enterprise Tier**
+   - 1,000 requests/day, 10,000/month
+   - 5-minute interval between probes
 
 ## Frontend Implementation Plan
 
 ### 1. User Interface Components
-- **Role Management Page**
-  - Table displaying all roles
-  - Role creation modal
-  - Role editing modal
-  - Role deletion confirmation dialog
 
-- **User Role Assignment Component**
-  - Add to user profile/settings page
-  - Multi-select dropdown for roles
-  - Visual indicators for assigned roles
+- **User Settings Page Enhancements**
+  - Display current subscription tier
+  - Upgrade/downgrade subscription options
+  - Role indicator for users
 
-- **Permission Management**
-  - Interface for assigning permissions to roles
-  - Categorized permission list
+- **Admin Panel Components** (admin role only)
+  - User management table
+  - API key management across all users
+  - System status dashboard
+  - Rate limit configuration
 
-### 2. Access Control Implementation
-- Create RBAC-specific React hooks:
-  - `usePermissions` - Check if user has specific permissions
-  - `useRoles` - Get current user's roles
+- **Rate Limit Displays**
+  - Visual indicators for daily/monthly usage
+  - Warnings when approaching limits
+  - Upgrade prompts for users near limits
 
-- Add permission checking to protected routes
-- Implement UI element visibility based on permissions
+### 2. Authentication & Access Control Implementation
+
+- **Enhanced Authentication Flow**
+  - Store JWT token with role and subscription information
+  - Handle 401 (Unauthorized) errors with automatic logout
+  - Handle 403 (Forbidden) for role-based access violations
+  - Handle 429 (Too Many Requests) for rate limit errors
+
+- **React Hooks for Authorization**
+  - `useRole` - Check if user has specific role
+  - `useSubscription` - Access subscription tier information
+  - `useRateLimits` - Get current usage and limits
+
+- **Route Protection**
+  - Admin routes restricted to admin role
+  - Conditional rendering of UI elements based on role
+  - Graceful error handling for unauthorized access attempts
 
 ### 3. API Integration
-- Create API handlers for all RBAC endpoints
-- Update auth context to include role information
-- Implement caching strategy for permissions
 
-### 4. User Experience
-- Clear indicators of permission-based access restrictions
-- Helpful error messages for permission denied scenarios
-- Visual distinction between different roles
+- **Update API Client**
+  - Include authentication headers in all requests
+  - Handle role-specific error responses
+  - Track rate limit information from response headers
 
-## Questions for Backend Team
-1. What is the format of role-based permissions?
-2. Is there a hierarchy of roles?
-3. Are there any default roles built into the system?
-4. How are custom permissions handled?
-5. Does the backend validate permission requirements, or is that a frontend responsibility?
-6. How should we handle cache invalidation for permission changes?
+- **JWT Token Management**
+  - Extract and store role information
+  - Update auth context to include role and subscription information
+  - Handle token expiration and refresh
 
-## Next Steps
-1. Schedule meeting with probeops-backend team to discuss integration
-2. Obtain API documentation and confirm data models
-3. Create mockups for RBAC UI components
-4. Implement API client methods for RBAC endpoints
-5. Develop UI components based on approved designs
-6. Integrate permission checking throughout the application
-7. Test integration with backend
-8. Review and iterate
+### 4. User Experience Enhancements
+
+- **Clear Role Indicators**
+  - Admin badge in navigation
+  - Role-specific UI elements
+
+- **Subscription Information**
+  - Tier status in dashboard
+  - Usage statistics
+  - Upgrade path prominently displayed
+
+- **Error Handling**
+  - User-friendly messages for authentication errors
+  - Clear indications when rate limits are reached
+  - Helpful guidance when access is denied due to role restrictions
+
+## Implementation Phases
+
+### Phase 1: Authentication Enhancement
+1. Update auth context to extract role and subscription from JWT
+2. Implement proper storage and retrieval of this information
+3. Create hooks for checking roles and subscription tiers
+
+### Phase 2: Role-Based UI Components
+1. Add role checks to existing routes and components
+2. Create admin-only sections in the UI
+3. Implement role indicators in the navigation
+
+### Phase 3: Subscription & Rate Limit Features
+1. Add subscription tier display to user dashboard
+2. Implement usage tracking and visualization
+3. Add rate limit warnings and notifications
+
+### Phase 4: Admin Panel
+1. Create user management interface for admins
+2. Implement system status dashboard
+3. Add configuration options for rate limits
+
+## Test Plan
+1. Authentication flow with different roles
+2. UI component visibility based on roles
+3. Rate limit enforcement and warnings
+4. Admin functionality access and controls

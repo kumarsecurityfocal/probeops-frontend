@@ -1,106 +1,139 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Role, Permission } from "@shared/schema";
+import { createContext, useContext, ReactNode, useEffect, useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "./use-auth";
-import { getQueryFn } from "@/lib/queryClient";
+import { UserRoles, SubscriptionTiers, UserRole, SubscriptionTier, RateLimit } from "@shared/schema";
 
-// Define types for the RBAC context
+// Define the RBAC context type
 type RbacContextType = {
-  userRoles: Role[];
-  userPermissions: Permission[];
-  isRolesLoading: boolean;
-  isPermissionsLoading: boolean;
-  hasRole: (roleName: string) => boolean;
-  hasPermission: (resource: string, action: string) => boolean;
-  refreshPermissions: () => void;
+  // Role information
+  role: UserRole | null;
+  isAdmin: boolean;
+  
+  // Subscription information
+  subscriptionTier: SubscriptionTier | null;
+  
+  // Rate limits
+  rateLimit: RateLimit | null;
+  isLoadingRateLimit: boolean;
+  rateLimitError: Error | null;
+  
+  // Helper functions
+  hasRole: (role: UserRole) => boolean;
+  checkSubscriptionTier: (minimumTier: SubscriptionTier) => boolean;
+  refreshRateLimits: () => void;
 };
 
-// Create the RBAC context
+// Create the context
 export const RbacContext = createContext<RbacContextType | null>(null);
 
-// Create the RBAC provider component
+// Rate limit tiers configuration
+const TIER_LIMITS = {
+  [SubscriptionTiers.FREE]: {
+    daily: 100,
+    monthly: 1000,
+    probe_interval: 15
+  },
+  [SubscriptionTiers.STANDARD]: {
+    daily: 500,
+    monthly: 5000,
+    probe_interval: 5
+  },
+  [SubscriptionTiers.ENTERPRISE]: {
+    daily: 1000,
+    monthly: 10000,
+    probe_interval: 5
+  }
+};
+
+// RBAC Provider component
 export function RbacProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [userPermissions, setUserPermissions] = useState<Permission[]>([]);
-
-  // Query to fetch the user's roles
+  
+  // Extract role and subscription from user object
+  const role = user?.role || null;
+  const subscriptionTier = user?.subscription_tier || null;
+  const isAdmin = role === UserRoles.ADMIN;
+  
+  // Query to fetch rate limit information
   const {
-    data: userRoles = [],
-    isLoading: isRolesLoading,
-    refetch: refetchRoles,
-  } = useQuery<Role[]>({
-    queryKey: ["/api/users", user?.id, "roles"],
-    queryFn: getQueryFn({ on401: "throw" }),
-    enabled: !!user, // Only fetch if user is logged in
-  });
-
-  // Query to fetch all permissions associated with user's roles
-  const {
-    data: permissions = [],
-    isLoading: isPermissionsLoading,
-    refetch: refetchPermissions,
-  } = useQuery<Permission[]>({
-    queryKey: ["userPermissions", userRoles?.map(role => role.id).join(",")],
+    data: rateLimit,
+    isLoading: isLoadingRateLimit,
+    error: rateLimitError,
+    refetch: refreshRateLimits
+  } = useQuery<RateLimit>({
+    queryKey: ["/api/user/rate-limits"],
     queryFn: async () => {
-      if (!userRoles || userRoles.length === 0) return [];
-      
-      // Fetch permissions for each role and merge them
-      const permissionSets = await Promise.all(
-        userRoles.map(async (role) => {
-          const response = await fetch(`/api/roles/${role.id}/permissions`);
-          if (!response.ok) throw new Error("Failed to fetch permissions");
-          return await response.json();
-        })
-      );
-      
-      // Flatten and deduplicate permissions
-      const allPermissions = permissionSets.flat();
-      const uniquePermissions = Array.from(
-        new Map(allPermissions.map(item => [item.id, item])).values()
-      );
-      
-      return uniquePermissions;
+      try {
+        const response = await apiRequest("GET", "/api/user/rate-limits");
+        return response.data;
+      } catch (error) {
+        console.error("Failed to fetch rate limits:", error);
+        
+        // Fallback to default limits based on subscription tier if API fails
+        if (subscriptionTier) {
+          return {
+            tier: subscriptionTier,
+            daily: {
+              limit: TIER_LIMITS[subscriptionTier].daily,
+              used: 0,
+              remaining: TIER_LIMITS[subscriptionTier].daily
+            },
+            monthly: {
+              limit: TIER_LIMITS[subscriptionTier].monthly,
+              used: 0,
+              remaining: TIER_LIMITS[subscriptionTier].monthly
+            },
+            probe_interval: TIER_LIMITS[subscriptionTier].probe_interval
+          };
+        }
+        throw error;
+      }
     },
-    enabled: userRoles !== undefined && userRoles.length > 0,
+    enabled: !!user, // Only run if user is authenticated
+    refetchInterval: 1000 * 60 * 5, // Refresh every 5 minutes
+    refetchOnWindowFocus: true,
   });
 
-  // Set user permissions when data changes
-  useEffect(() => {
-    if (permissions) {
-      setUserPermissions(permissions);
+  // Helper function to check if user has a specific role
+  const hasRole = (requiredRole: UserRole): boolean => {
+    if (!role) return false;
+    
+    // Admin role has all permissions
+    if (role === UserRoles.ADMIN) return true;
+    
+    // Check for exact role match
+    return role === requiredRole;
+  };
+
+  // Helper function to check if user's subscription tier meets or exceeds a minimum tier
+  const checkSubscriptionTier = (minimumTier: SubscriptionTier): boolean => {
+    if (!subscriptionTier) return false;
+    
+    // Always return true for enterprise tier
+    if (subscriptionTier === SubscriptionTiers.ENTERPRISE) return true;
+    
+    // Standard tier can access free and standard features
+    if (subscriptionTier === SubscriptionTiers.STANDARD) {
+      return minimumTier === SubscriptionTiers.FREE || minimumTier === SubscriptionTiers.STANDARD;
     }
-  }, [permissions]);
-
-  // Function to check if the user has a specific role
-  const hasRole = (roleName: string): boolean => {
-    if (!userRoles || userRoles.length === 0) return false;
-    return userRoles.some(role => role.name === roleName);
-  };
-
-  // Function to check if the user has a specific permission
-  const hasPermission = (resource: string, action: string): boolean => {
-    if (!userPermissions || userPermissions.length === 0) return false;
-    return userPermissions.some(
-      permission => permission.resource === resource && permission.action === action
-    );
-  };
-
-  // Function to refresh permissions
-  const refreshPermissions = () => {
-    refetchRoles();
-    refetchPermissions();
+    
+    // Free tier can only access free features
+    return minimumTier === SubscriptionTiers.FREE;
   };
 
   return (
     <RbacContext.Provider
       value={{
-        userRoles,
-        userPermissions,
-        isRolesLoading,
-        isPermissionsLoading,
+        role,
+        isAdmin,
+        subscriptionTier,
+        rateLimit,
+        isLoadingRateLimit,
+        rateLimitError,
         hasRole,
-        hasPermission,
-        refreshPermissions,
+        checkSubscriptionTier,
+        refreshRateLimits
       }}
     >
       {children}
@@ -108,7 +141,7 @@ export function RbacProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Custom hook to use the RBAC context
+// Hook to access the RBAC context
 export function useRbac() {
   const context = useContext(RbacContext);
   if (!context) {
@@ -117,20 +150,47 @@ export function useRbac() {
   return context;
 }
 
-// Helper hook to check role
-export function useHasRole(roleName: string) {
-  const { hasRole, isRolesLoading } = useRbac();
-  return {
-    hasRole: hasRole(roleName),
-    isLoading: isRolesLoading,
-  };
+// Helper hook to check if user is admin
+export function useIsAdmin() {
+  const { isAdmin } = useRbac();
+  return isAdmin;
 }
 
-// Helper hook to check permission
-export function useHasPermission(resource: string, action: string) {
-  const { hasPermission, isPermissionsLoading } = useRbac();
+// Helper hook to check if user has a specific role
+export function useHasRole(requiredRole: UserRole) {
+  const { hasRole } = useRbac();
+  return hasRole(requiredRole);
+}
+
+// Helper hook to get user's subscription tier information
+export function useSubscription() {
+  const { subscriptionTier, checkSubscriptionTier } = useRbac();
+  return { subscriptionTier, checkSubscriptionTier };
+}
+
+// Helper hook to get rate limit information
+export function useRateLimits() {
+  const { rateLimit, isLoadingRateLimit, rateLimitError, refreshRateLimits } = useRbac();
+  
+  // Calculate percentage of usage
+  const dailyUsagePercent = rateLimit ? 
+    Math.min(100, Math.round((rateLimit.daily.used / rateLimit.daily.limit) * 100)) : 0;
+  
+  const monthlyUsagePercent = rateLimit ?
+    Math.min(100, Math.round((rateLimit.monthly.used / rateLimit.monthly.limit) * 100)) : 0;
+  
+  // Determine if approaching limits
+  const isApproachingDailyLimit = dailyUsagePercent >= 80;
+  const isApproachingMonthlyLimit = monthlyUsagePercent >= 80;
+  
   return {
-    hasPermission: hasPermission(resource, action),
-    isLoading: isPermissionsLoading,
+    rateLimit,
+    isLoading: isLoadingRateLimit,
+    error: rateLimitError,
+    refresh: refreshRateLimits,
+    dailyUsagePercent,
+    monthlyUsagePercent,
+    isApproachingDailyLimit,
+    isApproachingMonthlyLimit
   };
 }

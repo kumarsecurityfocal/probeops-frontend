@@ -92,30 +92,62 @@ export type DnsProbeParams = z.infer<typeof dnsProbeSchema>;
 export type WhoisProbeParams = z.infer<typeof whoisProbeSchema>;
 
 // RBAC Types
-// Note: These are placeholders and should be updated based on information from probeops-backend team
+// Based on the ProbeOps RBAC implementation from backend team
 
-export const roleSchema = z.object({
+// Available user roles
+export const UserRoles = {
+  USER: 'user',
+  ADMIN: 'admin',
+} as const;
+
+// Available subscription tiers
+export const SubscriptionTiers = {
+  FREE: 'free',
+  STANDARD: 'standard',
+  ENTERPRISE: 'enterprise',
+} as const;
+
+// Schema for user role
+export const roleSchema = z.enum([UserRoles.USER, UserRoles.ADMIN]);
+
+// Schema for subscription tier
+export const subscriptionTierSchema = z.enum([
+  SubscriptionTiers.FREE, 
+  SubscriptionTiers.STANDARD, 
+  SubscriptionTiers.ENTERPRISE
+]);
+
+// Rate limit information schema
+export const rateLimitSchema = z.object({
+  tier: subscriptionTierSchema,
+  daily: z.object({
+    limit: z.number(),
+    used: z.number(),
+    remaining: z.number(),
+  }),
+  monthly: z.object({
+    limit: z.number(),
+    used: z.number(),
+    remaining: z.number(),
+  }),
+  probe_interval: z.number(), // interval in minutes
+});
+
+// Extend the user schema to include role and subscription information
+export const userWithRoleSchema = z.object({
   id: z.number(),
-  name: z.string(),
-  description: z.string().optional(),
+  username: z.string(),
+  email: z.string().email(),
   created_at: z.string(),
-  updated_at: z.string().optional()
+  is_active: z.boolean(),
+  is_admin: z.boolean(),
+  role: roleSchema,
+  subscription_tier: subscriptionTierSchema,
+  api_key_count: z.number(),
 });
 
-export const permissionSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  description: z.string().optional(),
-  resource: z.string(),
-  action: z.string()
-});
-
-export const userRoleSchema = z.object({
-  user_id: z.number(),
-  role_id: z.number(),
-  assigned_at: z.string()
-});
-
-export type Role = z.infer<typeof roleSchema>;
-export type Permission = z.infer<typeof permissionSchema>;
-export type UserRole = z.infer<typeof userRoleSchema>;
+// Types for TypeScript
+export type UserRole = z.infer<typeof roleSchema>;
+export type SubscriptionTier = z.infer<typeof subscriptionTierSchema>;
+export type RateLimit = z.infer<typeof rateLimitSchema>;
+export type UserWithRole = z.infer<typeof userWithRoleSchema>;
