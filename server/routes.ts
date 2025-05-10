@@ -275,23 +275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
-  // Endpoint to get proxy logs (development only)
-  app.get("/api/debug/proxy-logs", async (req, res) => {
-    if (process.env.NODE_ENV !== 'development') {
-      return res.status(403).json({ message: 'This endpoint is only available in development mode' });
-    }
-    
-    try {
-      const lines = req.query.lines ? parseInt(req.query.lines as string) : 50;
-      const logs = await getRecentProxyLogs(lines);
-      res.json({ logs });
-    } catch (error) {
-      res.status(500).json({ 
-        message: 'Failed to retrieve proxy logs', 
-        error: (error as Error).message 
-      });
-    }
-  });
+  // Endpoint for proxy logs has been removed
   
   // PROXY REMOVED: We're now using NGINX Proxy Manager on a separate server
   log('Development mode: API proxy has been removed. Update your API configuration in client/src/lib/api.ts', 'proxy');

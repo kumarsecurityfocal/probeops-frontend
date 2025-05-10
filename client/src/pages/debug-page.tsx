@@ -1,5 +1,4 @@
 import { ApiTester } from "@/components/debug/api-tester";
-import { ProxyLogs } from "@/components/debug/proxy-logs";
 import { MainLayout } from "@/components/layouts/main-layout";
 
 export default function DebugPage() {
@@ -28,11 +27,6 @@ JWT Token: ${localStorage.getItem('jwt_token') ? 'Present' : 'Not found'}`}
           <div>
             <h2 className="text-xl font-semibold mb-4">API Request Tester</h2>
             <ApiTester />
-          </div>
-          
-          <div>
-            <h2 className="text-xl font-semibold mb-4">API Proxy Logs</h2>
-            <ProxyLogs />
           </div>
         </div>
       </div>
