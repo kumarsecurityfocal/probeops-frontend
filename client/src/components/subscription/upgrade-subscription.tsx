@@ -12,7 +12,7 @@ interface SubscriptionPlanProps {
   description: string;
   features: string[];
   recommended?: boolean;
-  currentTier?: SubscriptionTier;
+  currentTier: SubscriptionTier;
   onSelect?: (tier: SubscriptionTier) => void;
 }
 
@@ -89,6 +89,9 @@ export function UpgradeSubscription() {
     });
   };
   
+  // Safe current tier that handles null value
+  const currentTierSafe = subscriptionTier || SubscriptionTiers.FREE;
+  
   return (
     <div className="w-full">
       <div className="text-center mb-8">
@@ -109,7 +112,7 @@ export function UpgradeSubscription() {
             "15-minute interval between probes",
             "Basic support"
           ]}
-          currentTier={subscriptionTier}
+          currentTier={currentTierSafe}
           onSelect={handleSelectPlan}
         />
         
@@ -125,7 +128,7 @@ export function UpgradeSubscription() {
             "API key management"
           ]}
           recommended={true}
-          currentTier={subscriptionTier}
+          currentTier={currentTierSafe}
           onSelect={handleSelectPlan}
         />
         
@@ -141,7 +144,7 @@ export function UpgradeSubscription() {
             "Advanced analytics",
             "Custom integrations"
           ]}
-          currentTier={subscriptionTier}
+          currentTier={currentTierSafe}
           onSelect={handleSelectPlan}
         />
       </div>
