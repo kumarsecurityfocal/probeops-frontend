@@ -1,39 +1,62 @@
-import { Badge } from "@/components/ui/badge";
 import { UserRole, UserRoles } from "@shared/schema";
-import { ShieldAlert, ShieldCheck, User } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { ShieldAlert, ShieldCheck } from "lucide-react";
 
 interface RoleBadgeProps {
   role: UserRole;
   size?: "sm" | "md" | "lg";
+  showIcon?: boolean;
 }
 
-export function RoleBadge({ role, size = "md" }: RoleBadgeProps) {
-  // Define styles and icons for each role
-  const roleStyles = {
-    [UserRoles.USER]: {
-      className: "bg-secondary/10 hover:bg-secondary/20 text-secondary border-secondary/20",
-      icon: <User className="mr-1 h-3 w-3" />,
-      label: "User"
-    },
-    [UserRoles.ADMIN]: {
-      className: "bg-gradient-to-r from-red-500 to-pink-500 text-white border-red-600/20",
-      icon: <ShieldAlert className="mr-1 h-3 w-3" />,
-      label: "Admin"
+export function RoleBadge({ 
+  role, 
+  size = "md", 
+  showIcon = true 
+}: RoleBadgeProps) {
+  // Get role configuration based on role value
+  const getRoleConfig = (role: UserRole) => {
+    switch (role) {
+      case UserRoles.USER:
+        return {
+          label: "User",
+          variant: "outline" as const,
+          icon: <ShieldCheck className={size === "sm" ? "h-3 w-3" : "h-4 w-4"} />,
+          className: "bg-slate-100 hover:bg-slate-100 text-slate-700 border-slate-200"
+        };
+      case UserRoles.ADMIN:
+        return {
+          label: "Admin",
+          variant: "default" as const,
+          icon: <ShieldAlert className={size === "sm" ? "h-3 w-3" : "h-4 w-4"} />,
+          className: "bg-gradient-to-r from-rose-500 to-red-500 text-white border-none"
+        };
+      default:
+        return {
+          label: role,
+          variant: "outline" as const,
+          icon: <ShieldCheck className={size === "sm" ? "h-3 w-3" : "h-4 w-4"} />,
+          className: ""
+        };
     }
   };
 
-  const { className, icon, label } = roleStyles[role];
-
-  const sizeStyles = {
-    sm: "text-xs px-2 py-0.5",
-    md: "text-xs px-2.5 py-0.5",
-    lg: "text-sm px-3 py-1"
+  const config = getRoleConfig(role);
+  
+  // Size configurations
+  const sizeClasses = {
+    sm: "text-xs py-0 px-2 h-5",
+    md: "text-sm py-0.5 px-2.5",
+    lg: "text-base py-1 px-3"
   };
 
   return (
-    <Badge className={`${className} ${sizeStyles[size]}`} variant="outline">
-      {icon}
-      {label}
+    <Badge 
+      variant={config.variant}
+      className={cn(sizeClasses[size], config.className)}
+    >
+      {showIcon && <span className="mr-1">{config.icon}</span>}
+      {config.label}
     </Badge>
   );
 }
