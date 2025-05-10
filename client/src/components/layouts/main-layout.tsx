@@ -81,8 +81,11 @@ export function MainLayout({ children }: MainLayoutProps) {
       <div className="hidden md:flex md:flex-shrink-0">
         <div className="flex flex-col w-64 bg-white border-r border-gray-200">
           <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
-            <div className="flex items-center flex-shrink-0 px-4">
-              <h1 className="text-xl font-semibold text-primary">ProbeOps</h1>
+            <div className="flex items-center flex-shrink-0 px-4 py-6">
+              <h1 className="text-2xl font-bold">
+                <span className="text-gradient-primary">Probe</span>
+                <span className="text-gradient-accent">Ops</span>
+              </h1>
             </div>
             <div className="mt-6 flex-grow flex flex-col">
               <nav className="flex-1 px-2 space-y-1">
@@ -90,17 +93,17 @@ export function MainLayout({ children }: MainLayoutProps) {
                   <Link key={item.href} href={item.href}>
                     <a
                       className={cn(
-                        "group flex items-center px-2 py-2 text-sm font-medium rounded-md",
+                        "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",
                         location === item.href
-                          ? "bg-gray-100 text-gray-900"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-gray-600 hover:bg-gray-50 hover:text-primary"
                       )}
                     >
                       <span className={cn(
                         "mr-3",
                         location === item.href
-                          ? "text-gray-500"
-                          : "text-gray-400"
+                          ? "text-primary"
+                          : "text-gray-400 group-hover:text-primary/70"
                       )}>
                         {item.icon}
                       </span>
@@ -146,7 +149,10 @@ export function MainLayout({ children }: MainLayoutProps) {
           </Button>
           <div className="flex-1 px-4 flex justify-between">
             <div className="flex-1 flex items-center">
-              <h1 className="text-xl font-semibold text-primary md:hidden">ProbeOps</h1>
+              <h1 className="text-xl font-bold md:hidden">
+                <span className="text-gradient-primary">Probe</span>
+                <span className="text-gradient-accent">Ops</span>
+              </h1>
             </div>
             <div className="ml-4 flex items-center md:ml-6">
               <Button
@@ -200,8 +206,11 @@ export function MainLayout({ children }: MainLayoutProps) {
             />
             <div className="fixed inset-y-0 left-0 flex flex-col max-w-xs w-full bg-white">
               <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
-                <div className="flex items-center flex-shrink-0 px-4">
-                  <h1 className="text-xl font-semibold text-primary">ProbeOps</h1>
+                <div className="flex items-center flex-shrink-0 px-4 py-4">
+                  <h1 className="text-xl font-bold">
+                    <span className="text-gradient-primary">Probe</span>
+                    <span className="text-gradient-accent">Ops</span>
+                  </h1>
                 </div>
                 <nav className="mt-5 px-2 space-y-1">
                   {navItems.map((item) => (
