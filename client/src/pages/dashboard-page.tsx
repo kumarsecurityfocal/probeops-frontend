@@ -33,7 +33,7 @@ export default function DashboardPage() {
             {/* Dashboard Summary Cards */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {/* Total Probes */}
-              <Card className="card-stats overflow-hidden border-l-4 border-l-primary">
+              <Card className="card-stats overflow-hidden border-l-4 border-l-primary hover:animate-[pulse_2s_ease-in-out]">
                 <CardContent className="p-5">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 bg-primary/10 rounded-full p-3">
@@ -54,7 +54,7 @@ export default function DashboardPage() {
               </Card>
               
               {/* Successful Probes */}
-              <Card className="card-stats overflow-hidden border-l-4 border-l-success">
+              <Card className="card-stats overflow-hidden border-l-4 border-l-success hover:animate-[pulse_2s_ease-in-out]">
                 <CardContent className="p-5">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 bg-success/10 rounded-full p-3">
@@ -75,7 +75,7 @@ export default function DashboardPage() {
               </Card>
               
               {/* Failed Probes */}
-              <Card className="card-stats overflow-hidden border-l-4 border-l-destructive">
+              <Card className="card-stats overflow-hidden border-l-4 border-l-destructive hover:animate-[pulse_2s_ease-in-out]">
                 <CardContent className="p-5">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 bg-destructive/10 rounded-full p-3">
@@ -96,7 +96,7 @@ export default function DashboardPage() {
               </Card>
               
               {/* Active API Keys */}
-              <Card className="card-stats overflow-hidden border-l-4 border-l-warning">
+              <Card className="card-stats overflow-hidden border-l-4 border-l-warning hover:animate-[pulse_2s_ease-in-out]">
                 <CardContent className="p-5">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 bg-warning/10 rounded-full p-3">

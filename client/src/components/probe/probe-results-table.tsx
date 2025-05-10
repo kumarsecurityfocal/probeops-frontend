@@ -54,45 +54,48 @@ export function ProbeResultsTable({
     <div className="w-full overflow-auto">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Date/Time</TableHead>
-            <TableHead>Probe Type</TableHead>
-            <TableHead>Target</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Result</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+          <TableRow className="border-b border-border/50 bg-muted/30">
+            <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date/Time</TableHead>
+            <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Probe Type</TableHead>
+            <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Target</TableHead>
+            <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</TableHead>
+            <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Result</TableHead>
+            <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {results.map((result) => (
-            <TableRow key={result.id}>
-              <TableCell className="font-medium">
+            <TableRow 
+              key={result.id} 
+              className="border-b border-border/20 hover:bg-muted/30 transition-colors"
+            >
+              <TableCell className="font-medium text-sm py-3">
                 {format(new Date(result.createdAt), "yyyy-MM-dd HH:mm:ss")}
               </TableCell>
               <TableCell>
                 <Badge variant={getProbeTypeBadgeVariant(result.probeType)}>
-                  {result.probeType}
+                  {result.probeType.toUpperCase()}
                 </Badge>
               </TableCell>
-              <TableCell>{result.target}</TableCell>
+              <TableCell className="font-medium">{result.target}</TableCell>
               <TableCell>
                 <Badge variant={getStatusBadgeVariant(result.status)}>
                   {result.status === "success" ? "Success" : "Failed"}
                 </Badge>
               </TableCell>
-              <TableCell className="max-w-md truncate">
+              <TableCell className="max-w-md truncate text-muted-foreground">
                 {result.result || "No result"}
               </TableCell>
               <TableCell className="text-right">
                 {onViewDetails && (
                   <Button
                     size="sm"
-                    variant="ghost"
+                    variant="outline"
                     onClick={() => onViewDetails(result)}
-                    className="text-primary hover:text-indigo-900"
+                    className="text-primary hover:text-primary-foreground hover:bg-primary transition-colors"
                   >
-                    <EyeIcon className="h-4 w-4 mr-1" />
-                    View
+                    <EyeIcon className="h-3.5 w-3.5 mr-1" />
+                    Details
                   </Button>
                 )}
               </TableCell>

@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
 :root {
   /* Base colors */
   --background: 210 40% 98%;
@@ -137,7 +143,26 @@
   }
   
   .card-stats {
-    @apply card-hover;
+    @apply card-hover transition-all duration-300 relative overflow-hidden;
+  }
+  
+  .card-stats::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.4) 38%, rgba(255,255,255,0) 48%);
+    background-size: 200% 100%;
+    background-position: 100% 0;
+    opacity: 0;
+    transition: opacity 0.3s ease, background-position 1s ease;
+  }
+  
+  .card-stats:hover::before {
+    opacity: 1;
+    background-position: -100% 0;
   }
   
   /* Status indicators */
