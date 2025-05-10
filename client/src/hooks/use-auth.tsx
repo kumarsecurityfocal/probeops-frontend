@@ -4,13 +4,21 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
+import { 
+  insertUserSchema, 
+  User as SelectUser, 
+  InsertUser, 
+  UserRole,
+  SubscriptionTier,
+  UserRoles,
+  SubscriptionTiers
+} from "@shared/schema";
 import { authAPI } from "../lib/api";
 import { queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 // Interface for the user data returned from the backend 
-// Based on the actual response format from the API
+// Based on the actual response format from the API with RBAC additions
 interface BackendUser {
   id: number;
   username: string;
@@ -19,6 +27,9 @@ interface BackendUser {
   is_active: boolean;
   is_admin: boolean;
   api_key_count: number;
+  // RBAC fields
+  role: UserRole;
+  subscription_tier: SubscriptionTier;
 }
 
 // Interface for login request data
@@ -79,9 +90,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const userData = response.data.user || response.data;
             console.log("Extracted user data:", userData);
             
+            // Ensure user object has required RBAC fields with defaults if missing
+            const enhancedUser = {
+              ...userData,
+              // If backend doesn't provide role, default based on is_admin flag
+              role: userData.role || (userData.is_admin ? UserRoles.ADMIN : UserRoles.USER),
+              // If backend doesn't provide subscription tier, default to free
+              subscription_tier: userData.subscription_tier || SubscriptionTiers.FREE
+            };
+            
             // Update user data with fresh data from server
-            setUser(userData);
-            localStorage.setItem('user', JSON.stringify(userData));
+            setUser(enhancedUser);
+            localStorage.setItem('user', JSON.stringify(enhancedUser));
           } catch (apiError) {
             console.error("Token validation failed:", apiError);
             // Clear invalid token data
@@ -112,16 +132,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (data: LoginResponse) => {
       console.log("Login success:", data);
+      
+      // Ensure user object has required RBAC fields with defaults if missing
+      const enhancedUser = {
+        ...data.user,
+        // If backend doesn't provide role, default to regular user
+        role: data.user.role || (data.user.is_admin ? UserRoles.ADMIN : UserRoles.USER),
+        // If backend doesn't provide subscription tier, default to free
+        subscription_tier: data.user.subscription_tier || SubscriptionTiers.FREE
+      };
+      
       // Save token and user info to localStorage
       localStorage.setItem('jwt_token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify(enhancedUser));
       
       // Update state
-      setUser(data.user);
+      setUser(enhancedUser);
+      
+      // Show different message based on role
+      const isAdmin = enhancedUser.role === UserRoles.ADMIN;
       
       toast({
         title: "Login successful",
-        description: `Welcome back, ${data.user.username}!`,
+        description: `Welcome back, ${enhancedUser.username}! ${isAdmin ? 'You have admin access.' : ''}`,
       });
     },
     onError: (error: Error) => {
@@ -144,18 +177,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (data: RegisterResponse) => {
       console.log("Registration success:", data);
+      
+      // Ensure user object has required RBAC fields with defaults if missing
+      const enhancedUser = {
+        ...data.user,
+        // New users are regular users by default
+        role: data.user.role || UserRoles.USER,
+        // New users start with free tier by default
+        subscription_tier: data.user.subscription_tier || SubscriptionTiers.FREE
+      };
+      
       // Store user data
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify(enhancedUser));
       
       // Update state
-      setUser(data.user);
+      setUser(enhancedUser);
       
       // Save API key for later use
       localStorage.setItem('first_api_key', data.api_key);
       
       toast({
         title: "Registration successful",
-        description: `Welcome, ${data.user.username}! Your first API key has been created.`,
+        description: `Welcome, ${enhancedUser.username}! Your account has been created with the Free tier subscription. Your first API key has been created.`,
       });
       
       // Note: We can't auto-login after registration because password is now hashed
@@ -229,4 +272,16 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
+}
+
+// Helper hook to check if the current user is an admin
+export function useIsAdmin() {
+  const { user } = useAuth();
+  return user?.role === UserRoles.ADMIN || user?.is_admin === true;
+}
+
+// Helper hook to get the user's subscription tier
+export function useSubscriptionTier() {
+  const { user } = useAuth();
+  return user?.subscription_tier || null;
 }
