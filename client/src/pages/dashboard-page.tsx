@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProbeStats, ProbeResult } from "@/lib/types";
-import { ArrowRight, Signal, CheckCircle, XCircle, Key } from "lucide-react";
+import { Activity, ArrowRight, Signal, CheckCircle, XCircle, Key } from "lucide-react";
 
 export default function DashboardPage() {
   // Fetch stats data directly from backend
@@ -23,26 +23,29 @@ export default function DashboardPage() {
     <MainLayout>
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold">Network Operations <span className="text-gradient-primary">Dashboard</span></h1>
+            <p className="text-muted-foreground mt-2">Monitor your network probes and API key usage in real-time</p>
+          </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
           <div className="py-4">
             {/* Dashboard Summary Cards */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {/* Total Probes */}
-              <Card>
+              <Card className="card-stats overflow-hidden border-l-4 border-l-primary">
                 <CardContent className="p-5">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 bg-indigo-100 rounded-md p-3">
+                    <div className="flex-shrink-0 bg-primary/10 rounded-full p-3">
                       <Signal className="text-primary text-xl" />
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <div>
-                        <p className="text-sm font-medium text-gray-500 truncate">Total Probes</p>
+                        <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Probes</p>
                         {isLoadingStats ? (
                           <Skeleton className="h-8 w-16 mt-1" />
                         ) : (
-                          <p className="text-2xl font-semibold text-gray-900">{stats?.totalProbes || 0}</p>
+                          <p className="text-3xl font-bold">{stats?.totalProbes || 0}</p>
                         )}
                       </div>
                     </div>
@@ -51,19 +54,19 @@ export default function DashboardPage() {
               </Card>
               
               {/* Successful Probes */}
-              <Card>
+              <Card className="card-stats overflow-hidden border-l-4 border-l-success">
                 <CardContent className="p-5">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 bg-green-100 rounded-md p-3">
-                      <CheckCircle className="text-green-500 text-xl" />
+                    <div className="flex-shrink-0 bg-success/10 rounded-full p-3">
+                      <CheckCircle className="text-success text-xl" />
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <div>
-                        <p className="text-sm font-medium text-gray-500 truncate">Successful Probes</p>
+                        <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Successful Probes</p>
                         {isLoadingStats ? (
                           <Skeleton className="h-8 w-16 mt-1" />
                         ) : (
-                          <p className="text-2xl font-semibold text-gray-900">{stats?.successfulProbes || 0}</p>
+                          <p className="text-3xl font-bold">{stats?.successfulProbes || 0}</p>
                         )}
                       </div>
                     </div>
@@ -72,19 +75,19 @@ export default function DashboardPage() {
               </Card>
               
               {/* Failed Probes */}
-              <Card>
+              <Card className="card-stats overflow-hidden border-l-4 border-l-destructive">
                 <CardContent className="p-5">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 bg-red-100 rounded-md p-3">
-                      <XCircle className="text-red-500 text-xl" />
+                    <div className="flex-shrink-0 bg-destructive/10 rounded-full p-3">
+                      <XCircle className="text-destructive text-xl" />
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <div>
-                        <p className="text-sm font-medium text-gray-500 truncate">Failed Probes</p>
+                        <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Failed Probes</p>
                         {isLoadingStats ? (
                           <Skeleton className="h-8 w-16 mt-1" />
                         ) : (
-                          <p className="text-2xl font-semibold text-gray-900">{stats?.failedProbes || 0}</p>
+                          <p className="text-3xl font-bold">{stats?.failedProbes || 0}</p>
                         )}
                       </div>
                     </div>
@@ -93,19 +96,19 @@ export default function DashboardPage() {
               </Card>
               
               {/* Active API Keys */}
-              <Card>
+              <Card className="card-stats overflow-hidden border-l-4 border-l-warning">
                 <CardContent className="p-5">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 bg-yellow-100 rounded-md p-3">
-                      <Key className="text-yellow-500 text-xl" />
+                    <div className="flex-shrink-0 bg-warning/10 rounded-full p-3">
+                      <Key className="text-warning text-xl" />
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <div>
-                        <p className="text-sm font-medium text-gray-500 truncate">Active API Keys</p>
+                        <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Active API Keys</p>
                         {isLoadingStats ? (
                           <Skeleton className="h-8 w-16 mt-1" />
                         ) : (
-                          <p className="text-2xl font-semibold text-gray-900">{stats?.activeApiKeys || 0}</p>
+                          <p className="text-3xl font-bold">{stats?.activeApiKeys || 0}</p>
                         )}
                       </div>
                     </div>
@@ -115,18 +118,21 @@ export default function DashboardPage() {
             </div>
             
             {/* Recent Probe Results */}
-            <div className="mt-8">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium text-gray-900">Recent Probe Results</h2>
-                <Button variant="ghost" asChild>
-                  <Link href="/history" className="text-primary hover:text-indigo-700 flex items-center">
-                    View all
-                    <ArrowRight className="ml-1 h-4 w-4" />
+            <div className="mt-10">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-xl font-bold flex items-center">
+                  <Activity className="h-5 w-5 mr-2 text-primary" />
+                  Recent Probe Results
+                </h2>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/history" className="text-primary hover:text-primary/80 flex items-center">
+                    View all history
+                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                   </Link>
                 </Button>
               </div>
               
-              <Card>
+              <Card className="border border-border/40 shadow-sm">
                 {isLoadingProbes ? (
                   <CardContent className="p-6">
                     <div className="space-y-4">
