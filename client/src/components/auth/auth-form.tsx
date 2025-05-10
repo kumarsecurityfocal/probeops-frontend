@@ -32,7 +32,8 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function AuthForm() {
-  const [isLogin, setIsLogin] = useState(true);
+  // Force always in login mode - registration is disabled
+  const [isLogin] = useState(true);
   const { loginMutation, registerMutation } = useAuth();
   
   // Login form
@@ -81,6 +82,12 @@ export function AuthForm() {
             <p className="text-gray-600 mt-1">
               {isLogin ? "Sign in to your account" : "Create your account"}
             </p>
+            {isLogin && (
+              <div className="mt-2 p-2 rounded bg-amber-50 border border-amber-200 text-sm text-amber-700">
+                New user registration is temporarily disabled to protect against bots and spammers.
+                Please contact an administrator to create an account.
+              </div>
+            )}
           </div>
           
           {isLogin ? (
@@ -232,14 +239,30 @@ export function AuthForm() {
           
           <div className="mt-6 text-center text-sm">
             <p className="text-gray-600">
-              {isLogin ? "Don't have an account?" : "Already have an account?"}
-              <Button
-                variant="link"
-                className="font-medium text-primary"
-                onClick={() => setIsLogin(!isLogin)}
-              >
-                {isLogin ? "Sign up" : "Sign in"}
-              </Button>
+              {isLogin ? (
+                <>
+                  Registration is temporarily disabled.
+                  <Button
+                    variant="link"
+                    className="font-medium text-muted-foreground line-through cursor-not-allowed"
+                    disabled={true}
+                  >
+                    Sign up
+                  </Button>
+                </>
+              ) : (
+                <>
+                  Already have an account?
+                  <Button
+                    variant="link"
+                    className="font-medium text-primary"
+                    // This is not needed since we've forced login mode
+                    onClick={() => {}}
+                  >
+                    Sign in
+                  </Button>
+                </>
+              )}
             </p>
           </div>
         </CardContent>
