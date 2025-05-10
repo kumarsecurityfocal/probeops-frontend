@@ -1,10 +1,10 @@
-import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SubscriptionTierBadge } from "./subscription-tier-badge";
 import { useRateLimits } from "@/hooks/use-rbac";
 import { Loader2, ArrowUpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RateLimit } from "@shared/schema";
+import { cn } from "@/lib/utils";
 
 interface RateLimitDisplayProps {
   onUpgradeClick?: () => void;
@@ -17,9 +17,7 @@ export function RateLimitDisplay({
 }: RateLimitDisplayProps) {
   const { 
     rateLimit, 
-    isLoading, 
-    dailyUsagePercent, 
-    monthlyUsagePercent,
+    isLoading,
     isApproachingDailyLimit,
     isApproachingMonthlyLimit
   } = useRateLimits();
@@ -36,10 +34,21 @@ export function RateLimitDisplay({
     return null;
   }
 
-  const getProgressColor = (percent: number) => {
-    if (percent >= 90) return "bg-destructive";
-    if (percent >= 75) return "bg-warning";
-    return "bg-primary-gradient";
+  // Calculate usage percentages
+  const dailyUsagePercent = Math.min(
+    Math.round((rateLimit.daily.used / rateLimit.daily.limit) * 100),
+    100
+  );
+  
+  const monthlyUsagePercent = Math.min(
+    Math.round((rateLimit.monthly.used / rateLimit.monthly.limit) * 100),
+    100
+  );
+
+  const getProgressColorClass = (percent: number): string => {
+    if (percent >= 90) return "bg-red-500";
+    if (percent >= 75) return "bg-amber-500";
+    return "bg-primary";
   };
 
   if (variant === "inline") {
@@ -64,11 +73,12 @@ export function RateLimitDisplay({
             </Button>
           )}
         </div>
-        <Progress 
-          value={dailyUsagePercent} 
-          className="h-2" 
-          indicatorClassName={getProgressColor(dailyUsagePercent)}
-        />
+        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+          <div 
+            className={cn("h-full transition-all", getProgressColorClass(dailyUsagePercent))}
+            style={{ width: `${dailyUsagePercent}%` }}
+          />
+        </div>
       </div>
     );
   }
@@ -89,11 +99,12 @@ export function RateLimitDisplay({
               {rateLimit.daily.used} / {rateLimit.daily.limit}
             </span>
           </div>
-          <Progress 
-            value={dailyUsagePercent} 
-            className="h-2" 
-            indicatorClassName={getProgressColor(dailyUsagePercent)}
-          />
+          <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+            <div 
+              className={cn("h-full transition-all", getProgressColorClass(dailyUsagePercent))}
+              style={{ width: `${dailyUsagePercent}%` }}
+            />
+          </div>
         </div>
         
         <div className="space-y-2">
@@ -103,17 +114,18 @@ export function RateLimitDisplay({
               {rateLimit.monthly.used} / {rateLimit.monthly.limit}
             </span>
           </div>
-          <Progress 
-            value={monthlyUsagePercent} 
-            className="h-2" 
-            indicatorClassName={getProgressColor(monthlyUsagePercent)}
-          />
+          <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+            <div 
+              className={cn("h-full transition-all", getProgressColorClass(monthlyUsagePercent))}
+              style={{ width: `${monthlyUsagePercent}%` }}
+            />
+          </div>
         </div>
         
         {(isApproachingDailyLimit || isApproachingMonthlyLimit) && onUpgradeClick && (
           <Button 
             onClick={onUpgradeClick} 
-            className="w-full mt-2 bg-gradient-primary text-white"
+            className="w-full mt-2 bg-gradient-to-r from-primary to-primary-dark text-white"
             size="sm"
           >
             <ArrowUpCircle className="mr-2 h-4 w-4" />

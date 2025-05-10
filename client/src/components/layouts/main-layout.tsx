@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, useIsAdmin } from "@/hooks/use-auth";
+import { useSubscription } from "@/hooks/use-rbac";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
-  DropdownMenuItem, 
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { 
@@ -20,8 +23,13 @@ import {
   User, 
   LogOut, 
   Menu,
-  Bug
+  Bug,
+  Users,
+  BarChart3,
+  ShieldAlert
 } from "lucide-react";
+import { RoleBadge } from "@/components/rbac/role-badge";
+import { SubscriptionTierBadge } from "@/components/subscription/subscription-tier-badge";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -174,7 +182,36 @@ export function MainLayout({ children }: MainLayoutProps) {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user?.username}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  
+                  {user?.role && (
+                    <div className="px-2 py-1.5 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Role</span>
+                        <RoleBadge role={user.role} size="sm" />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {user?.subscription_tier && (
+                    <div className="px-2 py-1.5 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Plan</span>
+                        <SubscriptionTierBadge tier={user.subscription_tier} size="sm" />
+                      </div>
+                    </div>
+                  )}
+                  
+                  <DropdownMenuSeparator />
+                  
                   <DropdownMenuItem onClick={() => window.location.href = '/settings'}>
                     <div className="flex items-center">
                       <User className="mr-2 h-4 w-4" />
@@ -187,6 +224,15 @@ export function MainLayout({ children }: MainLayoutProps) {
                       <span>Settings</span>
                     </div>
                   </DropdownMenuItem>
+                  {user?.role === 'admin' && (
+                    <DropdownMenuItem onClick={() => window.location.href = '/admin'}>
+                      <div className="flex items-center">
+                        <ShieldAlert className="mr-2 h-4 w-4" />
+                        <span>Admin Panel</span>
+                      </div>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="flex items-center">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Sign out</span>
