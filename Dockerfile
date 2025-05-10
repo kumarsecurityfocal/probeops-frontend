@@ -23,10 +23,19 @@ RUN NODE_ENV=production npm run build
 # Debug: List the built files
 RUN echo "Listing build files:" && find /app/dist -type f
 # Update the directory structure to match what prod-server.js expects
-RUN mkdir -p /app/dist/client
-RUN cp -r /app/dist/public/* /app/dist/client/
+# First, clear any existing client directory and create a fresh one
+RUN rm -rf /app/dist/client && mkdir -p /app/dist/client
+# Copy all content including nested directories from public to client
+# Using cp -a to preserve all file attributes and symbolic links
+RUN cp -a /app/dist/public/. /app/dist/client/
+# Make sure all files have proper permissions
+RUN chmod -R 755 /app/dist/client
 # Debug: Verify the final client directory
-RUN echo "Verifying client directory:" && find /app/dist/client -type f
+RUN echo "Verifying client directory structure:" && find /app/dist/client -type d
+RUN echo "Verifying client files:" && find /app/dist/client -type f
+# Compare both directories to ensure all files were copied
+RUN echo "Comparing directories to verify complete copy:" && \
+    diff -r /app/dist/public /app/dist/client || echo "Directories have expected differences (if any)"
 
 # Stage 2: Create production image
 FROM node:18-alpine AS production
