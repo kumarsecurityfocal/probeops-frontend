@@ -38,13 +38,15 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
+  const isAdmin = useIsAdmin();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const handleLogout = () => {
     logoutMutation.mutate();
   };
   
-  const navItems = [
+  // Common navigation items for all users
+  const commonNavItems = [
     {
       name: "Dashboard",
       href: "/",
@@ -70,12 +72,22 @@ export function MainLayout({ children }: MainLayoutProps) {
       href: "/settings",
       icon: <Settings className="w-5 h-5" />,
     },
+  ];
+  
+  // Admin-only navigation items
+  const adminNavItems = [
     {
       name: "Debug",
       href: "/debug",
       icon: <Bug className="w-5 h-5" />,
     },
+    // Other admin-only routes can be added here
   ];
+  
+  // Combine navigation items based on user role
+  const navItems = isAdmin 
+    ? [...commonNavItems, ...adminNavItems] 
+    : commonNavItems;
   
   const getInitials = () => {
     if (!user || !user.username) return "U";
@@ -224,11 +236,11 @@ export function MainLayout({ children }: MainLayoutProps) {
                       <span>Settings</span>
                     </div>
                   </DropdownMenuItem>
-                  {user?.role === 'admin' && (
-                    <DropdownMenuItem onClick={() => window.location.href = '/admin'}>
+                  {isAdmin && (
+                    <DropdownMenuItem onClick={() => window.location.href = '/debug'}>
                       <div className="flex items-center">
                         <ShieldAlert className="mr-2 h-4 w-4" />
-                        <span>Admin Panel</span>
+                        <span>Admin Console</span>
                       </div>
                     </DropdownMenuItem>
                   )}
